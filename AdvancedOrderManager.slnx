@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="AdvancedOrderManager.Application/AdvancedOrderManager.Application.vbproj" />
+  <Project Path="AdvancedOrderManager.Domain/AdvancedOrderManager.Domain.vbproj" />
+  <Project Path="AdvancedOrderManager.Infrastructure/AdvancedOrderManager.Infrastructure.vbproj" />
+  <Project Path="AdvancedOrderManager.Tests/AdvancedOrderManager.Tests.vbproj" />
+  <Project Path="AdvancedOrderManager.WinForms/AdvancedOrderManager.WinForms.vbproj" />
+</Solution>

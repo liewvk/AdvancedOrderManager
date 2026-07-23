@@ -10,8 +10,4 @@
     <ProjectReference Include="..\AdvancedOrderManager.Domain\AdvancedOrderManager.Domain.vbproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Repositories\" />
-  </ItemGroup>
-
 </Project>

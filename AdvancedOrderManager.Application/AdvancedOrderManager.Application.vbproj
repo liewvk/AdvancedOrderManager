@@ -10,10 +10,4 @@
     <ProjectReference Include="..\AdvancedOrderManager.Domain\AdvancedOrderManager.Domain.vbproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="contracts\" />
-    <Folder Include="Services\" />
-    <Folder Include="Requests\" />
-  </ItemGroup>
-
 </Project>

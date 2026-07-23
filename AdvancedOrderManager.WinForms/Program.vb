@@ -12,9 +12,10 @@ Friend Module Program
         Global.System.Windows.Forms.Application.EnableVisualStyles()
         Global.System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(False)
 
-        Dim mainForm As MainForm = Bootstrapper.CreateMainForm()
+        Dim customerForm As CustomerForm =
+    Bootstrapper.CreateCustomerForm()
 
-        Global.System.Windows.Forms.Application.Run(mainForm)
+        Global.System.Windows.Forms.Application.Run(customerForm)
 
     End Sub
 

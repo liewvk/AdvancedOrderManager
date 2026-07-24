@@ -13,6 +13,9 @@ Friend NotInheritable Class Bootstrapper
 
     Private Shared ReadOnly _customerRepository As ICustomerRepository =
         New InMemoryCustomerRepository()
+    Private Shared ReadOnly _productRepository As IProductRepository =
+        New InMemoryProductRepository()
+
 
     Private Sub New()
     End Sub
@@ -38,4 +41,26 @@ Friend NotInheritable Class Bootstrapper
             _customerRepository)
 
     End Function
+    Public Shared Function CreateProductForm() _
+    As ProductForm
+
+        Dim registerProductService As New RegisterProductService(_productRepository)
+
+        Dim searchProductsService As New SearchProductsService(_productRepository)
+
+        Dim adjustmentService As New InventoryAdjustmentService(_productRepository)
+
+        Dim restockQueueService As New RestockQueueService(_productRepository)
+
+        Dim statisticsService As New InventoryStatisticsService(_productRepository)
+
+        Return New ProductForm(
+        _productRepository,
+        registerProductService,
+        searchProductsService,
+        adjustmentService,
+        restockQueueService,
+        statisticsService)
+    End Function
+
 End Class

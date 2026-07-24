@@ -3,12 +3,21 @@ Option Strict On
 Option Infer On
 
 Imports System
+
 Imports AdvancedOrderManager.Domain.ValueObjects
 
 Namespace Domain.Entities
 
     Public NotInheritable Class CustomerProfile
         Implements IEquatable(Of CustomerProfile)
+        Implements IEntity(Of CustomerId)
+        Public ReadOnly Property Id As CustomerId _
+    Implements IEntity(Of CustomerId).Id
+
+            Get
+                Return CustomerId
+            End Get
+        End Property
 
         Private _name As PersonName
         Private _email As EmailAddress

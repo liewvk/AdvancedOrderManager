@@ -3,6 +3,7 @@ Option Strict On
 Option Infer On
 
 Imports AdvancedOrderManager.Application
+Imports AdvancedOrderManager.Infrastructure
 
 Public Class OrderProcessingEventForm
 
@@ -11,6 +12,8 @@ Public Class OrderProcessingEventForm
     Private ReadOnly _statistics As New OrderProcessingStatistics()
 
     Private ReadOnly _audit As New OrderAuditSubscriber()
+    Private ReadOnly _reportStore As New OrderReportStore()
+
 
     Private _auditSubscribed As Boolean
 
@@ -28,6 +31,12 @@ Public Class OrderProcessingEventForm
             New OrderProcessor(
                 validator,
                 totalCalculator)
+
+        AddHandler _processor.OrderProcessed,
+    AddressOf _reportStore.HandleOrderProcessed
+
+        AddHandler _processor.OrderRejected,
+    AddressOf _reportStore.HandleOrderRejected
 
         AddHandler _processor.OrderProcessed,
             AddressOf _statistics.HandleOrderProcessed
@@ -328,6 +337,12 @@ Public Class OrderProcessingEventForm
 
         RemoveHandler _processor.OrderRejected,
             AddressOf HandleOrderRejected
+        RemoveHandler _processor.OrderProcessed,
+    AddressOf _reportStore.HandleOrderProcessed
+
+        RemoveHandler _processor.OrderRejected,
+    AddressOf _reportStore.HandleOrderRejected
+
 
         If _auditSubscribed Then
 
@@ -339,6 +354,18 @@ Public Class OrderProcessingEventForm
 
             _auditSubscribed = False
         End If
+    End Sub
+    Private Sub btnOpenReport_Click(
+    sender As Object,
+    e As EventArgs) _
+    Handles btnOpenReport.Click
+
+        Using reportForm As New OrderReportForm(
+            _reportStore,
+            New OrderReportExporter())
+
+            reportForm.ShowDialog(Me)
+        End Using
     End Sub
 
 End Class

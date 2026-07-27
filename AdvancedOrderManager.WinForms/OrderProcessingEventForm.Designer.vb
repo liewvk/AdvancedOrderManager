@@ -39,6 +39,7 @@ Partial Class OrderProcessingEventForm
         lblQuantity = New Label()
         nudQuantity = New NumericUpDown()
         Label1 = New Label()
+        btnOpenReport = New Button()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -208,11 +209,22 @@ Partial Class OrderProcessingEventForm
         Label1.TabIndex = 6
         Label1.Text = "Unit Price:"
         ' 
+        ' btnOpenReport
+        ' 
+        btnOpenReport.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnOpenReport.Location = New Point(572, 292)
+        btnOpenReport.Name = "btnOpenReport"
+        btnOpenReport.Size = New Size(224, 44)
+        btnOpenReport.TabIndex = 7
+        btnOpenReport.Text = "Open Report Centre"
+        btnOpenReport.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(btnOpenReport)
         Controls.Add(Label1)
         Controls.Add(lblQuantity)
         Controls.Add(lblCustomerName)
@@ -255,4 +267,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents lblQuantity As Label
     Friend WithEvents nudQuantity As NumericUpDown
     Friend WithEvents Label1 As Label
+    Friend WithEvents btnOpenReport As Button
 End Class

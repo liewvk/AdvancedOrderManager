@@ -40,6 +40,7 @@ Partial Class OrderProcessingEventForm
         nudQuantity = New NumericUpDown()
         Label1 = New Label()
         btnOpenReport = New Button()
+        chkApplyTax = New CheckBox()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -219,11 +220,23 @@ Partial Class OrderProcessingEventForm
         btnOpenReport.Text = "Open Report Centre"
         btnOpenReport.UseVisualStyleBackColor = True
         ' 
+        ' chkApplyTax
+        ' 
+        chkApplyTax.AutoSize = True
+        chkApplyTax.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        chkApplyTax.Location = New Point(32, 320)
+        chkApplyTax.Name = "chkApplyTax"
+        chkApplyTax.Size = New Size(264, 29)
+        chkApplyTax.TabIndex = 8
+        chkApplyTax.Text = "Apply 6% Demonstration Tax"
+        chkApplyTax.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(chkApplyTax)
         Controls.Add(btnOpenReport)
         Controls.Add(Label1)
         Controls.Add(lblQuantity)
@@ -268,4 +281,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents nudQuantity As NumericUpDown
     Friend WithEvents Label1 As Label
     Friend WithEvents btnOpenReport As Button
+    Friend WithEvents chkApplyTax As CheckBox
 End Class

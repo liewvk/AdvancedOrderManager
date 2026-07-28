@@ -13,7 +13,7 @@ Public Class OrderProcessingEventForm
 
     Private ReadOnly _audit As New OrderAuditSubscriber()
     Private ReadOnly _reportStore As New OrderReportStore()
-
+    Private ReadOnly _pricingService As New OrderPricingService()
 
     Private _auditSubscribed As Boolean
 
@@ -115,30 +115,11 @@ Public Class OrderProcessingEventForm
     End Function
 
     Private Function CalculateOrderTotal(
-        order As OrderSubmission) As Decimal
+    order As OrderSubmission) As Decimal
 
-        If order Is Nothing Then
-
-            Throw New ArgumentNullException(
-                NameOf(order))
-        End If
-
-        Dim total =
-            order.Subtotal
-
-        If order.IsPriority Then
-
-            Const PriorityRate As Decimal =
-                0.05D
-
-            total +=
-                total * PriorityRate
-        End If
-
-        Return Decimal.Round(
-            total,
-            2,
-            MidpointRounding.AwayFromZero)
+        Return _pricingService.CalculateTotal(
+        order,
+        chkApplyTax.Checked)
     End Function
 
     Private Sub btnProcessOrder_Click(

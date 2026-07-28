@@ -243,6 +243,18 @@ Public Class OrderReportForm
                 "No report records match the filter.",
                 "Report ready.")
     End Sub
+    Private Async Function RunExportCommandAsync(
+    format As ReportExportFormat) As Task
+
+        Dim command =
+        ReportExportCommandFactory.Create(
+            format,
+            _exporter)
+
+        Await ExportAsync(
+        command)
+    End Function
+
 
     Private Sub btnRefreshReport_Click(
         sender As Object,
@@ -274,62 +286,42 @@ Public Class OrderReportForm
             e.SuppressKeyPress = True
         End If
     End Sub
+
     Private Async Sub btnExportCsv_Click(
             sender As Object,
             e As EventArgs) _
             Handles btnExportCsv.Click
 
-        Await ExportAsync(
-            "CSV files|*.csv",
-            "csv",
-            Function(path)
+        Await RunExportCommandAsync(
+         ReportExportFormat.Csv)
 
-                Return _exporter.ExportCsvAsync(
-                    _currentRecords,
-                    path,
-                    CancellationToken.None)
-            End Function)
     End Sub
     Private Async Sub btnExportJson_Click(
         sender As Object,
         e As EventArgs) _
         Handles btnExportJson.Click
 
-        Await ExportAsync(
-            "JSON files|*.json",
-            "json",
-            Function(path)
+        Await RunExportCommandAsync(
+    ReportExportFormat.Json)
 
-                Return _exporter.ExportJsonAsync(
-                    _currentRecords,
-                    path,
-                    CancellationToken.None)
-            End Function)
     End Sub
     Private Async Sub btnExportHtml_Click(
         sender As Object,
         e As EventArgs) _
         Handles btnExportHtml.Click
 
-        Await ExportAsync(
-            "HTML files|*.html",
-            "html",
-            Function(path)
+        Await RunExportCommandAsync(
+        ReportExportFormat.Html)
 
-                Return _exporter.ExportHtmlAsync(
-                    _currentRecords,
-                    path,
-                    CancellationToken.None)
-            End Function)
     End Sub
     Private Async Function ExportAsync(
-        filter As String,
-        defaultExtension As String,
-        exportOperation As Func(Of String, Task)) _
-        As Task
+        command As IReportExportCommand) As Task
+
+        If command Is Nothing Then
+            Throw New ArgumentNullException(NameOf(command))
+        End If
 
         If _currentRecords.Count = 0 Then
-
             MessageBox.Show(
                 Me,
                 "There are no report records to export.",
@@ -341,44 +333,31 @@ Public Class OrderReportForm
         End If
 
         Using dialog As New SaveFileDialog()
-
-            dialog.Filter = filter
-
-            dialog.DefaultExt =
-                defaultExtension
-
+            dialog.Filter = command.FileFilter
+            dialog.DefaultExt = command.DefaultExtension
             dialog.AddExtension = True
-
             dialog.OverwritePrompt = True
 
             dialog.FileName =
-                $"order-report-" &
-                $"{DateTime.Now:yyyyMMdd-HHmmss}." &
-                $"{defaultExtension}"
+                $"order-report-{DateTime.Now:yyyyMMdd-HHmmss}.{command.DefaultExtension}"
 
-            If dialog.ShowDialog(Me) <>
-               DialogResult.OK Then
-
+            If dialog.ShowDialog(Me) <> DialogResult.OK Then
                 Return
             End If
 
             Try
-                ToggleExportControls(
-                    enabled:=False)
+                ToggleExportControls(enabled:=False)
+                lblReportStatus.Text = "Exporting report..."
 
-                lblReportStatus.Text =
-                    "Exporting report..."
+                Await command.ExecuteAsync(
+                    _currentRecords,
+                    dialog.FileName,
+                    CancellationToken.None)
 
-                Await exportOperation(
-                    dialog.FileName)
-
-                lblReportStatus.Text =
-                    $"Report exported to {dialog.FileName}"
+                lblReportStatus.Text = $"Report exported to {dialog.FileName}"
 
             Catch ex As Exception
-
-                lblReportStatus.Text =
-                    "The report could not be exported."
+                lblReportStatus.Text = "The report could not be exported."
 
                 MessageBox.Show(
                     Me,
@@ -386,10 +365,8 @@ Public Class OrderReportForm
                     "Report Export",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error)
-
             Finally
-                ToggleExportControls(
-                    enabled:=True)
+                ToggleExportControls(enabled:=True)
             End Try
         End Using
     End Function

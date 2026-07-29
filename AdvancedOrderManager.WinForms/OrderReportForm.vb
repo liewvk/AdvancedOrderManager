@@ -9,6 +9,11 @@ Imports System.Threading
 Imports System.Linq
 Imports AdvancedOrderManager.Application
 Imports AdvancedOrderManager.Infrastructure
+Imports Microsoft.Extensions.Logging
+Imports Microsoft.Extensions.Logging.Abstractions
+Imports Microsoft.Extensions.DependencyInjection
+
+
 
 
 Public Class OrderReportForm
@@ -28,17 +33,26 @@ Public Class OrderReportForm
                 .AsReadOnly()
 
     Private _printRecordIndex As Integer
+    Private _logger As ILogger(Of OrderReportForm)
+
 
     Public Sub New()
 
         Me.New(
-            New OrderReportStore(),
-            New OrderReportExporter())
+    New OrderReportStore(),
+    New OrderReportExporter(
+        NullLogger(
+            Of OrderReportExporter).Instance),
+    NullLogger(
+        Of OrderReportForm).Instance)
+
     End Sub
 
     Public Sub New(
         reportStore As OrderReportStore,
-        exporter As IOrderReportExporter)
+    exporter As IOrderReportExporter,
+    logger As ILogger(
+        Of OrderReportForm))
 
         InitializeComponent()
 
@@ -54,14 +68,22 @@ Public Class OrderReportForm
                 NameOf(exporter))
         End If
 
+        If logger Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(logger))
+        End If
+
         _reportStore = reportStore
         _exporter = exporter
+        _logger = logger
 
         AddHandler _printDocument.BeginPrint,
             AddressOf PrintDocument_BeginPrint
 
         AddHandler _printDocument.PrintPage,
             AddressOf PrintDocument_PrintPage
+
     End Sub
     Private Sub OrderReportForm_Load(
         sender As Object,
@@ -666,5 +688,7 @@ Public Class OrderReportForm
 
         _printDocument.Dispose()
     End Sub
+
+
 End Class
 

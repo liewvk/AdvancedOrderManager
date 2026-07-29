@@ -2,19 +2,28 @@
 Option Strict On
 Option Infer On
 
-Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports AdvancedOrderManager.Application
 Imports AdvancedOrderManager.Infrastructure
+Imports Microsoft.Extensions.Logging.Abstractions
+Imports Microsoft.VisualStudio.TestTools.UnitTesting
 
 <TestClass>
 <TestCategory("Unit")>
 Public Class ReportExportCommandFactoryTests
 
+    Private Shared Function CreateExporter() _
+        As OrderReportExporter
+
+        Return New OrderReportExporter(
+            NullLogger(
+                Of OrderReportExporter).Instance)
+    End Function
+
     <TestMethod>
     Public Sub Create_CsvFormat_ReturnsCsvCommand()
 
         Dim exporter =
-            New OrderReportExporter()
+            CreateExporter()
 
         Dim command =
             ReportExportCommandFactory.Create(
@@ -37,7 +46,7 @@ Public Class ReportExportCommandFactoryTests
     Public Sub Create_JsonFormat_ReturnsJsonCommand()
 
         Dim exporter =
-            New OrderReportExporter()
+            CreateExporter()
 
         Dim command =
             ReportExportCommandFactory.Create(
@@ -50,13 +59,17 @@ Public Class ReportExportCommandFactoryTests
         Assert.AreEqual(
             "json",
             command.DefaultExtension)
+
+        Assert.AreEqual(
+            "JSON files|*.json",
+            command.FileFilter)
     End Sub
 
     <TestMethod>
     Public Sub Create_HtmlFormat_ReturnsHtmlCommand()
 
         Dim exporter =
-            New OrderReportExporter()
+            CreateExporter()
 
         Dim command =
             ReportExportCommandFactory.Create(
@@ -69,7 +82,10 @@ Public Class ReportExportCommandFactoryTests
         Assert.AreEqual(
             "html",
             command.DefaultExtension)
+
+        Assert.AreEqual(
+            "HTML files|*.html",
+            command.FileFilter)
     End Sub
 
 End Class
-

@@ -7,6 +7,12 @@ Public NotInheritable Class OrderPricingStrategyFactory
     Private Const MinimumBulkQuantity As Integer =
         10
 
+    Private Const BulkDiscountRate As Decimal =
+        0.05D
+
+    Private Const PrioritySurchargeRate As Decimal =
+        0.05D
+
     Private Sub New()
     End Sub
 
@@ -22,17 +28,19 @@ Public NotInheritable Class OrderPricingStrategyFactory
 
         If submission.IsPriority Then
 
-            Return New PriorityOrderPricingStrategy()
+            Return New PriorityOrderPricingStrategy(
+                PrioritySurchargeRate)
         End If
 
         If submission.Quantity >=
            MinimumBulkQuantity Then
 
-            Return New BulkOrderPricingStrategy()
+            Return New BulkOrderPricingStrategy(
+                MinimumBulkQuantity,
+                BulkDiscountRate)
         End If
 
         Return New StandardOrderPricingStrategy()
     End Function
 
 End Class
-

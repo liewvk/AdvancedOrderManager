@@ -4,39 +4,140 @@ Option Infer On
 
 Imports AdvancedOrderManager.Application
 Imports AdvancedOrderManager.Infrastructure
+Imports Microsoft.Extensions.DependencyInjection
+Imports Microsoft.Extensions.Logging
+Imports Microsoft.Extensions.Logging.Abstractions
+Imports Microsoft.Extensions.Options
 
 Public Class OrderProcessingEventForm
 
-    Private ReadOnly _processor As OrderProcessor
+    Private _reportStore As OrderReportStore
+
+    Private _pricingService As OrderPricingService
+
+    Private _exporter As IOrderReportExporter
+
+    Private _logger As ILogger(Of OrderProcessingEventForm)
+
+    Private _options As OrderManagerOptions
+
+    Private _processor As OrderProcessor
+
+    Private _serviceProvider As IServiceProvider
 
     Private ReadOnly _statistics As New OrderProcessingStatistics()
 
     Private ReadOnly _audit As New OrderAuditSubscriber()
-    Private ReadOnly _reportStore As New OrderReportStore()
-    Private ReadOnly _pricingService As New OrderPricingService()
 
     Private _auditSubscribed As Boolean
 
+
+    'This constructor is required by the Windows Forms Designer.
     Public Sub New()
 
         InitializeComponent()
 
-        Dim validator As Func(Of OrderSubmission, String) =
-                AddressOf ValidateOrder
+        _serviceProvider = Nothing
 
-        Dim totalCalculator As Func(Of OrderSubmission, Decimal) =
-                AddressOf CalculateOrderTotal
+        Dim defaultOptions =
+            New OrderManagerOptions()
+
+        InitialiseDependencies(
+            New OrderReportStore(),
+            New OrderPricingService(
+                defaultOptions),
+            New OrderReportExporter(
+                NullLogger(
+                    Of OrderReportExporter).Instance),
+            NullLogger(
+                Of OrderProcessingEventForm).Instance,
+            defaultOptions)
+    End Sub
+
+    'The dependency-injection container uses this constructor
+    'when the application starts through Program.Main.
+    Public Sub New(
+        reportStore As OrderReportStore,
+    pricingService As OrderPricingService,
+    exporter As IOrderReportExporter,
+    logger As ILogger(
+        Of OrderProcessingEventForm),
+    options As IOptions(
+        Of OrderManagerOptions),
+    serviceProvider As IServiceProvider)
+
+        InitializeComponent()
+
+        If options Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(options))
+        End If
+
+        _serviceProvider = serviceProvider
+
+        InitialiseDependencies(
+            reportStore,
+            pricingService,
+            exporter,
+            logger,
+            options.Value)
+
+    End Sub
+
+    Private Sub InitialiseDependencies(
+        reportStore As OrderReportStore,
+        pricingService As OrderPricingService,
+        exporter As IOrderReportExporter,
+        logger As ILogger(
+            Of OrderProcessingEventForm),
+        options As OrderManagerOptions)
+
+        If reportStore Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(reportStore))
+        End If
+
+        If pricingService Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(pricingService))
+        End If
+
+        If exporter Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(exporter))
+        End If
+
+        If logger Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(logger))
+        End If
+
+        If options Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(options))
+        End If
+
+        _reportStore = reportStore
+        _pricingService = pricingService
+        _exporter = exporter
+        _logger = logger
+        _options = options
 
         _processor =
             New OrderProcessor(
-                validator,
-                totalCalculator)
+                AddressOf ValidateOrder,
+                AddressOf CalculateOrderTotal)
 
-        AddHandler _processor.OrderProcessed,
-    AddressOf _reportStore.HandleOrderProcessed
+        SubscribeToProcessorEvents()
+    End Sub
 
-        AddHandler _processor.OrderRejected,
-    AddressOf _reportStore.HandleOrderRejected
+    Private Sub SubscribeToProcessorEvents()
 
         AddHandler _processor.OrderProcessed,
             AddressOf _statistics.HandleOrderProcessed
@@ -45,69 +146,146 @@ Public Class OrderProcessingEventForm
             AddressOf _statistics.HandleOrderRejected
 
         AddHandler _processor.OrderProcessed,
+            AddressOf _reportStore.HandleOrderProcessed
+
+        AddHandler _processor.OrderRejected,
+            AddressOf _reportStore.HandleOrderRejected
+
+        AddHandler _processor.OrderProcessed,
             AddressOf HandleOrderProcessed
 
         AddHandler _processor.OrderRejected,
             AddressOf HandleOrderRejected
     End Sub
 
+    Private Sub UnsubscribeFromProcessorEvents()
+
+        If _processor Is Nothing Then
+            Return
+        End If
+
+        RemoveHandler _processor.OrderProcessed,
+            AddressOf _statistics.HandleOrderProcessed
+
+        RemoveHandler _processor.OrderRejected,
+            AddressOf _statistics.HandleOrderRejected
+
+        RemoveHandler _processor.OrderProcessed,
+            AddressOf _reportStore.HandleOrderProcessed
+
+        RemoveHandler _processor.OrderRejected,
+            AddressOf _reportStore.HandleOrderRejected
+
+        RemoveHandler _processor.OrderProcessed,
+            AddressOf HandleOrderProcessed
+
+        RemoveHandler _processor.OrderRejected,
+            AddressOf HandleOrderRejected
+
+        If _auditSubscribed Then
+
+            RemoveHandler _processor.OrderProcessed,
+                AddressOf _audit.HandleOrderProcessed
+
+            RemoveHandler _processor.OrderRejected,
+                AddressOf _audit.HandleOrderRejected
+
+            _auditSubscribed = False
+        End If
+    End Sub
+
+    Public Sub New(
+    reportStore As OrderReportStore,
+    pricingService As OrderPricingService,
+    exporter As IOrderReportExporter,
+    logger As ILogger(
+        Of OrderProcessingEventForm),
+    options As IOptions(
+        Of OrderManagerOptions))
+
+        InitializeComponent()
+
+        If options Is Nothing Then
+
+            Throw New ArgumentNullException(
+            NameOf(options))
+        End If
+
+        InitialiseDependencies(
+        reportStore,
+        pricingService,
+        exporter,
+        logger,
+        options.Value)
+    End Sub
+
+
+
     Private Sub OrderProcessingEventForm_Load(
         sender As Object,
         e As EventArgs) _
         Handles MyBase.Load
 
-        lblProcessingStatus.Text = "Ready"
+        Me.Text =
+            _options.ApplicationTitle
 
-        lblProcessingStatus.ForeColor =
-            SystemColors.ControlText
+        chkEnableAudit.Checked =
+            _options.EnableAuditByDefault
 
-        chkEnableAudit.Checked = False
+        chkApplyTax.Text =
+            $"Apply " &
+            $"{_options.DemonstrationTaxRate:P0} " &
+            $"Demonstration Tax"
 
-        UpdateStatistics()
+        UpdateAuditSubscription()
+        UpdateStatisticsDisplay()
 
-        txtOrderNumber.Focus()
+        lblProcessingStatus.Text =
+            "Ready to process orders."
+
+        _logger.LogInformation(
+            "Order processing form opened.")
+        Me.Text =
+    _options.ApplicationTitle
+
+        chkEnableAudit.Checked =
+    _options.EnableAuditByDefault
+
+        chkApplyTax.Text =
+    $"Apply " &
+    $"{_options.DemonstrationTaxRate:P0} " &
+    $"Demonstration Tax"
+        _logger.LogInformation(
+    "Order processing form opened.")
+
+
+
     End Sub
 
-    Private Function ValidateOrder(
+    Private Shared Function ValidateOrder(
         order As OrderSubmission) As String
 
         If order Is Nothing Then
-
-            Throw New ArgumentNullException(
-                NameOf(order))
+            Return "An order submission is required."
         End If
 
         If String.IsNullOrWhiteSpace(
             order.OrderNumber) Then
 
-            Return "Enter an order number."
-        End If
-
-        If order.OrderNumber.Length > 30 Then
-
-            Return "The order number cannot exceed " &
-                   "30 characters."
+            Return "Order number is required."
         End If
 
         If String.IsNullOrWhiteSpace(
             order.CustomerName) Then
 
-            Return "Enter the customer name."
-        End If
-
-        If order.CustomerName.Length > 100 Then
-
-            Return "The customer name cannot exceed " &
-                   "100 characters."
+            Return "Customer name is required."
         End If
 
         If order.Quantity <= 0 Then
-
             Return "Quantity must be greater than zero."
         End If
 
         If order.UnitPrice <= 0D Then
-
             Return "Unit price must be greater than zero."
         End If
 
@@ -115,11 +293,17 @@ Public Class OrderProcessingEventForm
     End Function
 
     Private Function CalculateOrderTotal(
-    order As OrderSubmission) As Decimal
+        order As OrderSubmission) As Decimal
+
+        If order Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(order))
+        End If
 
         Return _pricingService.CalculateTotal(
-        order,
-        chkApplyTax.Checked)
+            order,
+            chkApplyTax.Checked)
     End Function
 
     Private Sub btnProcessOrder_Click(
@@ -127,33 +311,57 @@ Public Class OrderProcessingEventForm
         e As EventArgs) _
         Handles btnProcessOrder.Click
 
+        Dim orderNumber =
+            txtOrderNumber.Text.Trim()
+
+        Dim customerName =
+            txtCustomerName.Text.Trim()
+
         Try
-            Dim order =
+            Dim submission =
                 New OrderSubmission(
-                    txtOrderNumber.Text,
-                    txtCustomerName.Text,
+                    orderNumber,
+                    customerName,
                     Decimal.ToInt32(
                         nudQuantity.Value),
                     nudUnitPrice.Value,
                     chkPriority.Checked)
 
-            Dim succeeded =
+            _logger.LogInformation(
+                "Processing order {OrderNumber} " &
+                "for customer {CustomerName}.",
+                submission.OrderNumber,
+                submission.CustomerName)
+
+            Dim processed =
                 _processor.Process(
-                    order)
+                    submission)
 
-            UpdateStatistics()
+            If processed Then
 
-            If succeeded Then
+                _logger.LogInformation(
+                    "Order {OrderNumber} was " &
+                    "processed successfully.",
+                    submission.OrderNumber)
+
                 ClearOrderEntry()
+
+            Else
+                _logger.LogWarning(
+                    "Order {OrderNumber} was rejected.",
+                    submission.OrderNumber)
             End If
 
         Catch ex As Exception
 
+            _logger.LogError(
+                ex,
+                "An unexpected error occurred while " &
+                "processing order {OrderNumber}.",
+                orderNumber)
+
             lblProcessingStatus.Text =
                 "The order could not be processed."
-
-            lblProcessingStatus.ForeColor =
-                Color.DarkRed
 
             MessageBox.Show(
                 Me,
@@ -175,21 +383,21 @@ Public Class OrderProcessingEventForm
         Dim priorityText =
             If(
                 e.IsPriority,
-                "Priority",
-                "Standard")
+                " Priority",
+                String.Empty)
 
         lstOrderActivity.Items.Insert(
             0,
-            $"Processed {e.OrderNumber} | " &
-            $"{e.CustomerName} | " &
-            $"{priorityText} | " &
-            $"RM{e.TotalAmount:N2}")
+            $"{e.ProcessedAtUtc.ToLocalTime():HH:mm:ss} " &
+            $"Processed {e.OrderNumber} for " &
+            $"{e.CustomerName}.{priorityText} " &
+            $"Total: {_options.CurrencySymbol}" &
+            $"{e.TotalAmount:N2}")
 
         lblProcessingStatus.Text =
-            $"Order {e.OrderNumber} was processed."
+            $"Order {e.OrderNumber} processed successfully."
 
-        lblProcessingStatus.ForeColor =
-            Color.DarkGreen
+        UpdateStatisticsDisplay()
     End Sub
 
     Private Sub HandleOrderRejected(
@@ -200,26 +408,18 @@ Public Class OrderProcessingEventForm
             Return
         End If
 
-        Dim displayedOrderNumber =
-            If(
-                String.IsNullOrWhiteSpace(
-                    e.OrderNumber),
-                "(no order number)",
-                e.OrderNumber)
-
         lstOrderActivity.Items.Insert(
             0,
-            $"Rejected {displayedOrderNumber} | " &
-            $"{e.Reason}")
+            $"{e.RejectedAtUtc.ToLocalTime():HH:mm:ss} " &
+            $"Rejected {e.OrderNumber}: {e.Reason}")
 
         lblProcessingStatus.Text =
-            e.Reason
+            $"Order rejected: {e.Reason}"
 
-        lblProcessingStatus.ForeColor =
-            Color.DarkRed
+        UpdateStatisticsDisplay()
     End Sub
 
-    Private Sub UpdateStatistics()
+    Private Sub UpdateStatisticsDisplay()
 
         lblProcessedCount.Text =
             $"Processed: {_statistics.ProcessedCount:N0}"
@@ -228,13 +428,23 @@ Public Class OrderProcessingEventForm
             $"Rejected: {_statistics.RejectedCount:N0}"
 
         lblTotalRevenue.Text =
-            $"Revenue: RM{_statistics.TotalRevenue:N2}"
+            $"Revenue: {_options.CurrencySymbol}" &
+            $"{_statistics.TotalRevenue:N2}"
     End Sub
 
     Private Sub chkEnableAudit_CheckedChanged(
         sender As Object,
         e As EventArgs) _
         Handles chkEnableAudit.CheckedChanged
+
+        UpdateAuditSubscription()
+    End Sub
+
+    Private Sub UpdateAuditSubscription()
+
+        If _processor Is Nothing Then
+            Return
+        End If
 
         If chkEnableAudit.Checked AndAlso
            Not _auditSubscribed Then
@@ -248,10 +458,7 @@ Public Class OrderProcessingEventForm
             _auditSubscribed = True
 
             lblProcessingStatus.Text =
-                "Audit subscriber enabled."
-
-            lblProcessingStatus.ForeColor =
-                Color.DarkBlue
+                "Audit monitoring enabled."
 
         ElseIf Not chkEnableAudit.Checked AndAlso
                _auditSubscribed Then
@@ -265,27 +472,8 @@ Public Class OrderProcessingEventForm
             _auditSubscribed = False
 
             lblProcessingStatus.Text =
-                "Audit subscriber disabled."
-
-            lblProcessingStatus.ForeColor =
-                SystemColors.ControlText
+                "Audit monitoring disabled."
         End If
-    End Sub
-
-    Private Sub ClearOrderEntry()
-
-        txtOrderNumber.Clear()
-        txtCustomerName.Clear()
-
-        nudQuantity.Value =
-            nudQuantity.Minimum
-
-        nudUnitPrice.Value =
-            nudUnitPrice.Minimum
-
-        chkPriority.Checked = False
-
-        txtOrderNumber.Focus()
     End Sub
 
     Private Sub btnClearActivity_Click(
@@ -296,10 +484,31 @@ Public Class OrderProcessingEventForm
         lstOrderActivity.Items.Clear()
 
         lblProcessingStatus.Text =
-            "Activity display cleared."
+            "Order activity cleared."
+    End Sub
 
-        lblProcessingStatus.ForeColor =
-            SystemColors.ControlText
+
+
+    Private Sub ClearOrderEntry()
+
+        txtOrderNumber.Clear()
+        txtCustomerName.Clear()
+
+        If nudQuantity.Minimum <= 1D AndAlso
+           nudQuantity.Maximum >= 1D Then
+
+            nudQuantity.Value = 1D
+        End If
+
+        If nudUnitPrice.Minimum <= 0.01D AndAlso
+           nudUnitPrice.Maximum >= 0.01D Then
+
+            nudUnitPrice.Value = 0.01D
+        End If
+
+        chkPriority.Checked = False
+
+        txtOrderNumber.Focus()
     End Sub
 
     Private Sub OrderProcessingEventForm_FormClosed(
@@ -307,46 +516,38 @@ Public Class OrderProcessingEventForm
         e As FormClosedEventArgs) _
         Handles MyBase.FormClosed
 
-        RemoveHandler _processor.OrderProcessed,
-            AddressOf _statistics.HandleOrderProcessed
+        UnsubscribeFromProcessorEvents()
 
-        RemoveHandler _processor.OrderRejected,
-            AddressOf _statistics.HandleOrderRejected
-
-        RemoveHandler _processor.OrderProcessed,
-            AddressOf HandleOrderProcessed
-
-        RemoveHandler _processor.OrderRejected,
-            AddressOf HandleOrderRejected
-        RemoveHandler _processor.OrderProcessed,
-    AddressOf _reportStore.HandleOrderProcessed
-
-        RemoveHandler _processor.OrderRejected,
-    AddressOf _reportStore.HandleOrderRejected
+        _logger.LogInformation(
+            "Order processing form closed.")
 
 
-        If _auditSubscribed Then
-
-            RemoveHandler _processor.OrderProcessed,
-                AddressOf _audit.HandleOrderProcessed
-
-            RemoveHandler _processor.OrderRejected,
-                AddressOf _audit.HandleOrderRejected
-
-            _auditSubscribed = False
-        End If
     End Sub
     Private Sub btnOpenReport_Click(
-    sender As Object,
-    e As EventArgs) _
-    Handles btnOpenReport.Click
+        sender As Object,
+        e As EventArgs) _
+        Handles btnOpenReport.Click
 
-        Using reportForm As New OrderReportForm(
-            _reportStore,
-            New OrderReportExporter())
+        If _serviceProvider Is Nothing Then
+
+            Using reportForm As New OrderReportForm(
+                _reportStore,
+                _exporter,
+                NullLogger(
+                    Of OrderReportForm).Instance)
+
+                reportForm.ShowDialog(Me)
+            End Using
+
+            Return
+        End If
+
+        Using reportForm =
+            _serviceProvider _
+                .GetRequiredService(
+                    Of OrderReportForm)()
 
             reportForm.ShowDialog(Me)
         End Using
     End Sub
-
 End Class

@@ -24,7 +24,7 @@ Partial Class OrderReportForm
     Private Sub InitializeComponent()
         cboReportStatus = New ComboBox()
         txtReportSearch = New TextBox()
-        Me.lblReportStatus = New Label()
+        lblReportStatus = New Label()
         lblReportSearchtxt = New Label()
         btnRefreshReport = New Button()
         btnExportCsv = New Button()
@@ -38,7 +38,7 @@ Partial Class OrderReportForm
         lblReportRejected = New Label()
         lblReportRevenue = New Label()
         lblReportAverage = New Label()
-        lblReportStatus = New Label()
+        btnOpenReport = New Button()
         CType(dgvOrderReport, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
@@ -60,15 +60,15 @@ Partial Class OrderReportForm
         txtReportSearch.Size = New Size(195, 31)
         txtReportSearch.TabIndex = 1
         ' 
-        ' lblReportStatustxt
+        ' lblReportStatus
         ' 
-        Me.lblReportStatus.AutoSize = True
-        Me.lblReportStatus.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Me.lblReportStatus.Location = New Point(44, 44)
-        Me.lblReportStatus.Name = "lblReportStatus"
-        Me.lblReportStatus.Size = New Size(118, 25)
-        Me.lblReportStatus.TabIndex = 2
-        Me.lblReportStatus.Text = "Report Status"
+        lblReportStatus.AutoSize = True
+        lblReportStatus.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblReportStatus.Location = New Point(783, 194)
+        lblReportStatus.Name = "lblReportStatus"
+        lblReportStatus.Size = New Size(60, 25)
+        lblReportStatus.TabIndex = 11
+        lblReportStatus.Text = "Ready"
         ' 
         ' lblReportSearchtxt
         ' 
@@ -202,22 +202,22 @@ Partial Class OrderReportForm
         lblReportAverage.TabIndex = 10
         lblReportAverage.Text = "Average: $0.00"
         ' 
-        ' lblReportStatus
+        ' btnOpenReport
         ' 
-        lblReportStatus.AutoSize = True
-        lblReportStatus.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblReportStatus.Location = New Point(783, 194)
-        lblReportStatus.Name = "lblReportStatus"
-        lblReportStatus.Size = New Size(60, 25)
-        lblReportStatus.TabIndex = 11
-        lblReportStatus.Text = "Ready"
+        btnOpenReport.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnOpenReport.Location = New Point(41, 151)
+        btnOpenReport.Name = "btnOpenReport"
+        btnOpenReport.Size = New Size(228, 29)
+        btnOpenReport.TabIndex = 12
+        btnOpenReport.Text = "Open Report Center"
+        btnOpenReport.UseVisualStyleBackColor = True
         ' 
         ' OrderReportForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(982, 653)
-        Controls.Add(lblReportStatus)
+        Controls.Add(btnOpenReport)
         Controls.Add(lblReportProcessed)
         Controls.Add(lblReportAverage)
         Controls.Add(lblReportRevenue)
@@ -231,7 +231,7 @@ Partial Class OrderReportForm
         Controls.Add(btnExportCsv)
         Controls.Add(btnRefreshReport)
         Controls.Add(lblReportSearchtxt)
-        Controls.Add(Me.lblReportStatus)
+        Controls.Add(lblReportStatus)
         Controls.Add(txtReportSearch)
         Controls.Add(cboReportStatus)
         FormBorderStyle = FormBorderStyle.Fixed3D
@@ -258,4 +258,5 @@ Partial Class OrderReportForm
     Friend WithEvents lblReportRevenue As Label
     Friend WithEvents lblReportAverage As Label
     Friend WithEvents lblReportStatus As Label
+    Friend WithEvents btnOpenReport As Button
 End Class

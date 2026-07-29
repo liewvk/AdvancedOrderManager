@@ -2,18 +2,29 @@
 Option Strict On
 Option Infer On
 
-Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports AdvancedOrderManager.Application
+Imports Microsoft.VisualStudio.TestTools.UnitTesting
 
 <TestClass>
 <TestCategory("Unit")>
 Public Class OrderPricingServiceTests
 
+    Private Shared Function CreateOptions() As OrderManagerOptions
+
+        Return New OrderManagerOptions() With {
+            .DemonstrationTaxRate = 0.06D,
+            .MinimumBulkQuantity = 10,
+            .BulkDiscountRate = 0.05D,
+            .PrioritySurchargeRate = 0.05D
+        }
+    End Function
+
     <TestMethod>
     Public Sub CalculateTotal_StandardOrder_ReturnsSubtotal()
 
         Dim service =
-            New OrderPricingService()
+            New OrderPricingService(
+                CreateOptions())
 
         Dim submission =
             New OrderSubmission(
@@ -37,7 +48,8 @@ Public Class OrderPricingServiceTests
     Public Sub CalculateTotal_PriorityOrder_AddsSurcharge()
 
         Dim service =
-            New OrderPricingService()
+            New OrderPricingService(
+                CreateOptions())
 
         Dim submission =
             New OrderSubmission(
@@ -53,7 +65,7 @@ Public Class OrderPricingServiceTests
                 applyTax:=False)
 
         Assert.AreEqual(
-            110D,
+            105D,
             total)
     End Sub
 
@@ -61,7 +73,8 @@ Public Class OrderPricingServiceTests
     Public Sub CalculateTotal_BulkOrder_AppliesDiscount()
 
         Dim service =
-            New OrderPricingService()
+            New OrderPricingService(
+                CreateOptions())
 
         Dim submission =
             New OrderSubmission(
@@ -85,7 +98,8 @@ Public Class OrderPricingServiceTests
     Public Sub CalculateTotal_TaxEnabled_AddsTax()
 
         Dim service =
-            New OrderPricingService()
+            New OrderPricingService(
+                CreateOptions())
 
         Dim submission =
             New OrderSubmission(
@@ -106,4 +120,3 @@ Public Class OrderPricingServiceTests
     End Sub
 
 End Class
-

@@ -12,6 +12,7 @@ Imports System.Text.Json
 Imports System.Threading
 Imports System.Threading.Tasks
 Imports AdvancedOrderManager.Application
+Imports Microsoft.Extensions.Logging
 
 Public NotInheritable Class OrderReportExporter
     Implements IOrderReportExporter
@@ -19,6 +20,20 @@ Public NotInheritable Class OrderReportExporter
     Private Shared ReadOnly JsonOptions As New JsonSerializerOptions() With {
             .WriteIndented = True
         }
+
+    Private ReadOnly _logger As ILogger(Of OrderReportExporter)
+
+    Public Sub New(
+        logger As ILogger(Of OrderReportExporter))
+
+        If logger Is Nothing Then
+
+            Throw New ArgumentNullException(
+                NameOf(logger))
+        End If
+
+        _logger = logger
+    End Sub
 
     Public Async Function ExportCsvAsync(
         records As IReadOnlyList(Of OrderReportRecord),
@@ -29,6 +44,12 @@ Public NotInheritable Class OrderReportExporter
 
         ValidateArguments(
             records,
+            filePath)
+
+        _logger.LogInformation(
+            "Exporting {RecordCount} report records " &
+            "to CSV file {FilePath}.",
+            records.Count,
             filePath)
 
         Dim encoding =
@@ -68,7 +89,8 @@ Public NotInheritable Class OrderReportExporter
                     values.Select(
                         Function(value)
 
-                            Return EscapeCsv(value)
+                            Return EscapeCsv(
+                                value)
                         End Function)
 
                 Await writer.WriteLineAsync(
@@ -77,41 +99,13 @@ Public NotInheritable Class OrderReportExporter
                         escapedValues))
             Next
         End Using
+
+        _logger.LogInformation(
+            "CSV report exported successfully " &
+            "to {FilePath}.",
+            filePath)
     End Function
 
-    Private Shared Function EscapeCsv(
-        value As String) As String
-
-        Dim safeValue =
-            If(value, String.Empty)
-
-        Dim requiresQuotes =
-            safeValue.Contains(","c) OrElse
-            safeValue.Contains(""""c) OrElse
-            safeValue.Contains(ControlChars.Cr) OrElse
-            safeValue.Contains(ControlChars.Lf)
-
-        If Not requiresQuotes Then
-            Return safeValue
-        End If
-
-        Dim quote As Char =
-            """"c
-
-        Dim doubledQuote =
-            New String(
-                quote,
-                2)
-
-        Dim escaped =
-            safeValue.Replace(
-                quote.ToString(),
-                doubledQuote)
-
-        Return quote.ToString() &
-               escaped &
-               quote.ToString()
-    End Function
     Public Async Function ExportJsonAsync(
         records As IReadOnlyList(Of OrderReportRecord),
         filePath As String,
@@ -123,6 +117,12 @@ Public NotInheritable Class OrderReportExporter
             records,
             filePath)
 
+        _logger.LogInformation(
+            "Exporting {RecordCount} report records " &
+            "to JSON file {FilePath}.",
+            records.Count,
+            filePath)
+
         Using stream As New FileStream(
                 filePath,
                 FileMode.Create,
@@ -132,14 +132,19 @@ Public NotInheritable Class OrderReportExporter
                 useAsync:=True)
 
             Await JsonSerializer.SerializeAsync(
-                Of IReadOnlyList(
-                    Of OrderReportRecord))(
-                        stream,
-                        records,
-                        JsonOptions,
-                        cancellationToken)
+                Of IReadOnlyList(Of OrderReportRecord))(
+                    stream,
+                    records,
+                    JsonOptions,
+                    cancellationToken)
         End Using
+
+        _logger.LogInformation(
+            "JSON report exported successfully " &
+            "to {FilePath}.",
+            filePath)
     End Function
+
     Public Async Function ExportHtmlAsync(
         records As IReadOnlyList(Of OrderReportRecord),
         filePath As String,
@@ -149,6 +154,12 @@ Public NotInheritable Class OrderReportExporter
 
         ValidateArguments(
             records,
+            filePath)
+
+        _logger.LogInformation(
+            "Exporting {RecordCount} report records " &
+            "to HTML file {FilePath}.",
+            records.Count,
             filePath)
 
         Dim summary =
@@ -178,6 +189,7 @@ Public NotInheritable Class OrderReportExporter
 
         html.AppendLine(
             "<title>Order Processing Report</title>")
+
         html.AppendLine(
             "<style>")
 
@@ -201,7 +213,8 @@ Public NotInheritable Class OrderReportExporter
             "min-width:150px;}")
 
         html.AppendLine(
-            "table{border-collapse:collapse;width:100%;}")
+            "table{border-collapse:collapse;" &
+            "width:100%;}")
 
         html.AppendLine(
             "th,td{border:1px solid #ccc;" &
@@ -226,8 +239,11 @@ Public NotInheritable Class OrderReportExporter
             "<h1>Order Processing Report</h1>")
 
         html.AppendLine(
-            $"<p class=""generated"">Generated: " &
-            $"{DateTimeOffset.Now:dd MMM yyyy HH:mm:ss}</p>")
+            $"<p class=""generated"">" &
+            $"Generated: " &
+            $"{DateTimeOffset.Now:dd MMM yyyy HH:mm:ss}" &
+            $"</p>")
+
         html.AppendLine(
             "<div class=""summary"">")
 
@@ -253,6 +269,7 @@ Public NotInheritable Class OrderReportExporter
 
         html.AppendLine(
             "</div>")
+
         html.AppendLine(
             "<table>")
 
@@ -285,25 +302,25 @@ Public NotInheritable Class OrderReportExporter
                         .ToLocalTime() _
                         .ToString(
                             "dd MMM yyyy HH:mm:ss")),
-                cssClass:=String.Empty)
+                String.Empty)
 
             AppendTableCell(
                 html,
                 encoder.Encode(
                     record.OrderNumber),
-                cssClass:=String.Empty)
+                String.Empty)
 
             AppendTableCell(
                 html,
                 encoder.Encode(
                     record.CustomerName),
-                cssClass:=String.Empty)
+                String.Empty)
 
             AppendTableCell(
                 html,
                 encoder.Encode(
                     record.Status.ToString()),
-                cssClass:=String.Empty)
+                String.Empty)
 
             AppendTableCell(
                 html,
@@ -311,7 +328,7 @@ Public NotInheritable Class OrderReportExporter
                     record.IsPriority,
                     "Yes",
                     "No"),
-                cssClass:=String.Empty)
+                String.Empty)
 
             AppendTableCell(
                 html,
@@ -320,30 +337,79 @@ Public NotInheritable Class OrderReportExporter
                     OrderReportStatus.Processed,
                     $"RM{record.TotalAmount:N2}",
                     String.Empty),
-                cssClass:="number")
+                "number")
 
             AppendTableCell(
                 html,
                 encoder.Encode(
                     record.Message),
-                cssClass:=String.Empty)
+                String.Empty)
 
             html.AppendLine(
                 "</tr>")
         Next
 
         html.AppendLine(
-            "</tbody></table>")
+            "</tbody>")
 
         html.AppendLine(
-            "</body></html>")
+            "</table>")
+
+        html.AppendLine(
+            "</body>")
+
+        html.AppendLine(
+            "</html>")
 
         Await File.WriteAllTextAsync(
             filePath,
             html.ToString(),
             Encoding.UTF8,
             cancellationToken)
+
+        _logger.LogInformation(
+            "HTML report exported successfully " &
+            "to {FilePath}.",
+            filePath)
     End Function
+
+    Private Shared Function EscapeCsv(
+        value As String) As String
+
+        Dim safeValue =
+            If(
+                value,
+                String.Empty)
+
+        Dim requiresQuotes =
+            safeValue.Contains(","c) OrElse
+            safeValue.Contains(""""c) OrElse
+            safeValue.Contains(ControlChars.Cr) OrElse
+            safeValue.Contains(ControlChars.Lf)
+
+        If Not requiresQuotes Then
+
+            Return safeValue
+        End If
+
+        Dim quote As Char =
+            """"c
+
+        Dim doubledQuote =
+            New String(
+                quote,
+                2)
+
+        Dim escapedValue =
+            safeValue.Replace(
+                quote.ToString(),
+                doubledQuote)
+
+        Return quote.ToString() &
+               escapedValue &
+               quote.ToString()
+    End Function
+
     Private Shared Sub AppendSummaryCard(
         builder As StringBuilder,
         title As String,

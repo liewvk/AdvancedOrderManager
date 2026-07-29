@@ -2,11 +2,12 @@
 Option Strict On
 Option Infer On
 
-Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports AdvancedOrderManager.Application
-Imports AdvancedOrderManager.Infrastructure
 Imports System.IO
 Imports System.Threading
+Imports AdvancedOrderManager.Application
+Imports AdvancedOrderManager.Infrastructure
+Imports Microsoft.Extensions.Logging.Abstractions
+Imports Microsoft.VisualStudio.TestTools.UnitTesting
 
 <TestClass>
 <TestCategory("Integration")>
@@ -35,7 +36,8 @@ Public Class OrderReportExporterTests
                     }.AsReadOnly()
 
             Dim exporter =
-                New OrderReportExporter()
+    New OrderReportExporter(
+        NullLogger(Of OrderReportExporter).Instance)
 
             Await exporter.ExportCsvAsync(
                 records,

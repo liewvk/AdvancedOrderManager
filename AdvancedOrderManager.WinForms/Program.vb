@@ -117,6 +117,15 @@ Friend Module Program
 
         builder.Logging.SetMinimumLevel(
             LogLevel.Information)
+        builder.Services _
+    .AddSingleton(
+        Of IAsyncOrderProcessingService,
+           SimulatedOrderProcessingService)()
+
+        builder.Services _
+    .AddTransient(
+        Of AsyncOrderProcessingForm)()
+
     End Sub
 
 End Module

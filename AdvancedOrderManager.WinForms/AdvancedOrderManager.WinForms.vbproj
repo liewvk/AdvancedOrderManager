@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <StartupObject>AdvancedOrderManager.AsyncOrderProcessingForm</StartupObject>
+    <StartupObject>AdvancedOrderManager.OrderProcessingEventForm</StartupObject>
     <UseWindowsForms>true</UseWindowsForms>
     <MyType>WindowsFormsWithCustomSubMain</MyType>
     <RootNamespace>AdvancedOrderManager</RootNamespace>

@@ -219,6 +219,29 @@ Public Class OrderProcessingEventForm
         options.Value)
     End Sub
 
+    Private Sub btnConcurrentProcessing_Click(
+    sender As Object,
+    e As EventArgs) _
+    Handles btnConcurrentProcessing.Click
+
+        If _serviceProvider Is Nothing Then
+
+            Using concurrentForm As New ConcurrentOrderProcessingForm()
+
+                concurrentForm.ShowDialog(Me)
+            End Using
+
+            Return
+        End If
+
+        Using concurrentForm As ConcurrentOrderProcessingForm =
+        _serviceProvider.GetRequiredService(
+            Of ConcurrentOrderProcessingForm)()
+
+            concurrentForm.ShowDialog(Me)
+        End Using
+
+    End Sub
 
 
     Private Sub OrderProcessingEventForm_Load(

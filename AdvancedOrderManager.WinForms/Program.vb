@@ -126,6 +126,15 @@ Friend Module Program
     .AddTransient(
         Of AsyncOrderProcessingForm)()
 
+        builder.Services _
+    .AddSingleton(
+        Of IConcurrentOrderProcessingService,
+           ConcurrentOrderProcessingService)()
+
+        builder.Services _
+    .AddTransient(
+        Of ConcurrentOrderProcessingForm)()
+
     End Sub
 
 End Module

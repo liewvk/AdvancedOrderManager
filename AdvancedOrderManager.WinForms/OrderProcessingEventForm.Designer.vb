@@ -41,6 +41,7 @@ Partial Class OrderProcessingEventForm
         Label1 = New Label()
         btnOpenReport = New Button()
         chkApplyTax = New CheckBox()
+        btnConcurrentProcessing = New Button()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -231,11 +232,22 @@ Partial Class OrderProcessingEventForm
         chkApplyTax.Text = "Apply 6% Demonstration Tax"
         chkApplyTax.UseVisualStyleBackColor = True
         ' 
+        ' btnConcurrentProcessing
+        ' 
+        btnConcurrentProcessing.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnConcurrentProcessing.Location = New Point(572, 359)
+        btnConcurrentProcessing.Name = "btnConcurrentProcessing"
+        btnConcurrentProcessing.Size = New Size(286, 36)
+        btnConcurrentProcessing.TabIndex = 9
+        btnConcurrentProcessing.Text = "Concurrent Processing Demo"
+        btnConcurrentProcessing.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(btnConcurrentProcessing)
         Controls.Add(chkApplyTax)
         Controls.Add(btnOpenReport)
         Controls.Add(Label1)
@@ -282,4 +294,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents Label1 As Label
     Friend WithEvents btnOpenReport As Button
     Friend WithEvents chkApplyTax As CheckBox
+    Friend WithEvents btnConcurrentProcessing As Button
 End Class

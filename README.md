@@ -1,8 +1,14 @@
 # AdvancedOrderManager
 
-AdvancedOrderManager is a Visual Basic .NET application for managing orders, inventory and related workflows. This repository contains the source code, configuration, and supporting files for building and running the project.
+AdvancedOrderManager is a Visual Basic .NET application for managing orders, inventory and related workflows. This repository contains the source code, configuration, and supporting files for building and running the application.
 
-> Note: This README provides general guidance for building and running the project. Implementation details (database schema, exact configuration keys, and environment-specific setup) are in the repository structure and project files.
+> Note: This README provides general guidance for building and running the project. Implementation details (database schema, exact configuration keys, and environment-specific setup) are in the repository sources and chapter files.
+
+## Recent changes
+
+- Complete Chapter 9 - Concurrency, Parallel Processing, and Thread Safety.
+  - Updated domain and application code to cover concurrency-safe patterns, thread-safety for in-memory stores, and examples of parallel processing for batch operations.
+  - See Chapter 09 in the repository for examples, explanations, and unit tests related to concurrent processing.
 
 ## Key Features
 
@@ -47,7 +53,7 @@ AdvancedOrderManager is a Visual Basic .NET application for managing orders, inv
    dotnet build
    ```
 
-5. Configure the application settings (connection strings, logging, etc.). Look for configuration files such as `app.config`, `web.config`, or `appsettings.json` in the project folders and update them accordingly.
+5. Configure the application settings (connection strings, logging, etc.). Look for configuration files such as `app.config`, `web.config`, or `appsettings.json` in the project folders and update them as appropriate.
 
 6. Run the application from the IDE or via command line:
 
@@ -134,4 +140,4 @@ If the repository includes a LICENSE file, that governs usage. If not, add a lic
 
 ## Contact
 
-For questions about this repository, open an issue on GitHub. If you are the repository owner, update this README with project-specific details (database schema, exact prerequisites, environment variables, etc.).
+For questions about this repository, open an issue on GitHub. If you are the repository owner, update this README with project-specific details (database schema, exact prerequisites, environment-specific setup, and chapter references).

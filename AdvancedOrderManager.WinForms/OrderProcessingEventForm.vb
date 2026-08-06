@@ -573,4 +573,30 @@ Public Class OrderProcessingEventForm
             reportForm.ShowDialog(Me)
         End Using
     End Sub
+    Private Sub btnDatabaseHistory_Click(
+    sender As Object,
+    e As EventArgs) _
+    Handles btnDatabaseHistory.Click
+
+        If _serviceProvider Is Nothing Then
+
+            MessageBox.Show(
+                Me,
+                "Database services require the application " &
+                "to start through Program.Main.",
+                "Database Service Unavailable",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning)
+
+            Return
+        End If
+
+        Using databaseForm As OrderDatabaseForm =
+            _serviceProvider.GetRequiredService(
+                Of OrderDatabaseForm)()
+
+            databaseForm.ShowDialog(Me)
+        End Using
+
+    End Sub
 End Class

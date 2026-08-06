@@ -135,6 +135,18 @@ Friend Module Program
     .AddTransient(
         Of ConcurrentOrderProcessingForm)()
 
+        builder.Services _
+    .AddSingleton(
+        Of IOrderDataRepository,
+           SqlOrderDataRepository)()
+
+        builder.Services _
+    .AddTransient(
+        Of OrderDatabaseForm)()
+
+
+
+
     End Sub
 
 End Module

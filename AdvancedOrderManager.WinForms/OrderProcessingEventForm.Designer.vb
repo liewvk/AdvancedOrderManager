@@ -42,6 +42,7 @@ Partial Class OrderProcessingEventForm
         btnOpenReport = New Button()
         chkApplyTax = New CheckBox()
         btnConcurrentProcessing = New Button()
+        btnDatabaseHistory = New Button()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -117,7 +118,7 @@ Partial Class OrderProcessingEventForm
         ' lstOrderActivity
         ' 
         lstOrderActivity.FormattingEnabled = True
-        lstOrderActivity.Location = New Point(42, 428)
+        lstOrderActivity.Location = New Point(35, 447)
         lstOrderActivity.Name = "lstOrderActivity"
         lstOrderActivity.Size = New Size(707, 144)
         lstOrderActivity.TabIndex = 5
@@ -126,7 +127,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblProcessedCount.AutoSize = True
         lblProcessedCount.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblProcessedCount.Location = New Point(562, 75)
+        lblProcessedCount.Location = New Point(556, 29)
         lblProcessedCount.Name = "lblProcessedCount"
         lblProcessedCount.Size = New Size(111, 25)
         lblProcessedCount.TabIndex = 6
@@ -136,7 +137,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblRejectedCount.AutoSize = True
         lblRejectedCount.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblRejectedCount.Location = New Point(562, 131)
+        lblRejectedCount.Location = New Point(556, 85)
         lblRejectedCount.Name = "lblRejectedCount"
         lblRejectedCount.Size = New Size(97, 25)
         lblRejectedCount.TabIndex = 6
@@ -146,7 +147,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblTotalRevenue.AutoSize = True
         lblTotalRevenue.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblTotalRevenue.Location = New Point(562, 185)
+        lblTotalRevenue.Location = New Point(556, 139)
         lblTotalRevenue.Name = "lblTotalRevenue"
         lblTotalRevenue.Size = New Size(131, 25)
         lblTotalRevenue.TabIndex = 6
@@ -156,7 +157,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblProcessingStatus.AutoSize = True
         lblProcessingStatus.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblProcessingStatus.Location = New Point(562, 234)
+        lblProcessingStatus.Location = New Point(556, 188)
         lblProcessingStatus.Name = "lblProcessingStatus"
         lblProcessingStatus.Size = New Size(60, 25)
         lblProcessingStatus.TabIndex = 6
@@ -214,7 +215,7 @@ Partial Class OrderProcessingEventForm
         ' btnOpenReport
         ' 
         btnOpenReport.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnOpenReport.Location = New Point(572, 292)
+        btnOpenReport.Location = New Point(566, 246)
         btnOpenReport.Name = "btnOpenReport"
         btnOpenReport.Size = New Size(224, 44)
         btnOpenReport.TabIndex = 7
@@ -235,18 +236,28 @@ Partial Class OrderProcessingEventForm
         ' btnConcurrentProcessing
         ' 
         btnConcurrentProcessing.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnConcurrentProcessing.Location = New Point(572, 359)
+        btnConcurrentProcessing.Location = New Point(566, 313)
         btnConcurrentProcessing.Name = "btnConcurrentProcessing"
         btnConcurrentProcessing.Size = New Size(286, 36)
         btnConcurrentProcessing.TabIndex = 9
         btnConcurrentProcessing.Text = "Concurrent Processing Demo"
         btnConcurrentProcessing.UseVisualStyleBackColor = True
         ' 
+        ' btnDatabaseHistory
+        ' 
+        btnDatabaseHistory.Location = New Point(572, 373)
+        btnDatabaseHistory.Name = "btnDatabaseHistory"
+        btnDatabaseHistory.Size = New Size(267, 36)
+        btnDatabaseHistory.TabIndex = 10
+        btnDatabaseHistory.Text = "Database Order History"
+        btnDatabaseHistory.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(btnDatabaseHistory)
         Controls.Add(btnConcurrentProcessing)
         Controls.Add(chkApplyTax)
         Controls.Add(btnOpenReport)
@@ -295,4 +306,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents btnOpenReport As Button
     Friend WithEvents chkApplyTax As CheckBox
     Friend WithEvents btnConcurrentProcessing As Button
+    Friend WithEvents btnDatabaseHistory As Button
 End Class

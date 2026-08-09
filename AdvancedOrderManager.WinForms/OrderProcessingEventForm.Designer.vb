@@ -43,6 +43,7 @@ Partial Class OrderProcessingEventForm
         chkApplyTax = New CheckBox()
         btnConcurrentProcessing = New Button()
         btnDatabaseHistory = New Button()
+        btnEntityFrameworkQueries = New Button()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -215,7 +216,7 @@ Partial Class OrderProcessingEventForm
         ' btnOpenReport
         ' 
         btnOpenReport.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnOpenReport.Location = New Point(566, 246)
+        btnOpenReport.Location = New Point(565, 222)
         btnOpenReport.Name = "btnOpenReport"
         btnOpenReport.Size = New Size(224, 44)
         btnOpenReport.TabIndex = 7
@@ -236,7 +237,7 @@ Partial Class OrderProcessingEventForm
         ' btnConcurrentProcessing
         ' 
         btnConcurrentProcessing.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnConcurrentProcessing.Location = New Point(566, 313)
+        btnConcurrentProcessing.Location = New Point(565, 289)
         btnConcurrentProcessing.Name = "btnConcurrentProcessing"
         btnConcurrentProcessing.Size = New Size(286, 36)
         btnConcurrentProcessing.TabIndex = 9
@@ -245,18 +246,28 @@ Partial Class OrderProcessingEventForm
         ' 
         ' btnDatabaseHistory
         ' 
-        btnDatabaseHistory.Location = New Point(572, 373)
+        btnDatabaseHistory.Location = New Point(571, 349)
         btnDatabaseHistory.Name = "btnDatabaseHistory"
         btnDatabaseHistory.Size = New Size(267, 36)
         btnDatabaseHistory.TabIndex = 10
         btnDatabaseHistory.Text = "Database Order History"
         btnDatabaseHistory.UseVisualStyleBackColor = True
         ' 
+        ' btnEntityFrameworkQueries
+        ' 
+        btnEntityFrameworkQueries.Location = New Point(572, 404)
+        btnEntityFrameworkQueries.Name = "btnEntityFrameworkQueries"
+        btnEntityFrameworkQueries.Size = New Size(223, 35)
+        btnEntityFrameworkQueries.TabIndex = 11
+        btnEntityFrameworkQueries.Text = "EF Core Queries"
+        btnEntityFrameworkQueries.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(btnEntityFrameworkQueries)
         Controls.Add(btnDatabaseHistory)
         Controls.Add(btnConcurrentProcessing)
         Controls.Add(chkApplyTax)
@@ -307,4 +318,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents chkApplyTax As CheckBox
     Friend WithEvents btnConcurrentProcessing As Button
     Friend WithEvents btnDatabaseHistory As Button
+    Friend WithEvents btnEntityFrameworkQueries As Button
 End Class

@@ -599,4 +599,31 @@ Public Class OrderProcessingEventForm
         End Using
 
     End Sub
+    Private Sub btnEntityFrameworkQueries_Click(
+    sender As Object,
+    e As EventArgs) _
+    Handles btnEntityFrameworkQueries.Click
+
+        If _serviceProvider Is Nothing Then
+
+            MessageBox.Show(
+            Me,
+            "EF Core services require the application " &
+            "to start through Program.Main.",
+            "Service Unavailable",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning)
+
+            Return
+        End If
+
+        Using queryForm As EntityFrameworkQueryForm =
+        _serviceProvider.GetRequiredService(
+            Of EntityFrameworkQueryForm)()
+
+            queryForm.ShowDialog(Me)
+        End Using
+
+    End Sub
+
 End Class

@@ -79,6 +79,18 @@ Friend Module Program
                         .GetSection(
                             OrderManagerOptions.SectionName))
 
+        Dim databaseSection =
+    builder.Configuration _
+        .GetSection(
+            OrderDatabaseOptions.SectionName)
+
+        Dim databaseConnectionString As String =
+    databaseSection("ConnectionString")
+
+        builder.Services _
+    .AddOrderEntityFramework(
+        databaseConnectionString)
+
         builder.Services _
             .AddSingleton(
                 Function(provider)
@@ -135,15 +147,15 @@ Friend Module Program
     .AddTransient(
         Of ConcurrentOrderProcessingForm)()
 
-        builder.Services _
-    .AddSingleton(
-        Of IOrderDataRepository,
-           SqlOrderDataRepository)()
+
 
         builder.Services _
     .AddTransient(
         Of OrderDatabaseForm)()
 
+        builder.Services _
+    .AddTransient(
+        Of EntityFrameworkQueryForm)()
 
 
 

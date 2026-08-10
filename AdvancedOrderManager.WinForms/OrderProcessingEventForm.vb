@@ -625,5 +625,32 @@ Public Class OrderProcessingEventForm
         End Using
 
     End Sub
+    Private Sub btnRestApi_Click(
+    sender As Object,
+    e As EventArgs) _
+    Handles btnRestApi.Click
+
+        If _serviceProvider Is Nothing Then
+
+            MessageBox.Show(
+            Me,
+            "REST API services require the application " &
+            "to start through Program.Main.",
+            "Service Unavailable",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning)
+
+            Return
+        End If
+
+        Using restApiForm As RestApiForm =
+        _serviceProvider.GetRequiredService(
+            Of RestApiForm)()
+
+            restApiForm.ShowDialog(Me)
+
+        End Using
+
+    End Sub
 
 End Class

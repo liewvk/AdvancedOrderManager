@@ -156,7 +156,39 @@ Friend Module Program
         builder.Services _
     .AddTransient(
         Of EntityFrameworkQueryForm)()
+        builder.Services _
+    .Configure(
+        Of ExternalApiOptions)(
+            builder.Configuration _
+                .GetSection(
+                    ExternalApiOptions.SectionName))
 
+        Dim externalApiSection =
+    builder.Configuration _
+        .GetSection(
+            ExternalApiOptions.SectionName)
+
+        Dim externalApiBaseAddress As String =
+    externalApiSection("BaseAddress")
+
+        Dim timeoutText As String =
+    externalApiSection("TimeoutSeconds")
+
+        Dim externalApiTimeoutSeconds As Integer
+
+        If Not Integer.TryParse(
+    timeoutText,
+    externalApiTimeoutSeconds) Then
+
+            externalApiTimeoutSeconds = 15
+        End If
+        builder.Services _
+    .AddExternalRestApi(
+        externalApiBaseAddress,
+        externalApiTimeoutSeconds)
+        builder.Services _
+    .AddTransient(
+        Of RestApiForm)()
 
 
     End Sub

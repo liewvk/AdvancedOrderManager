@@ -44,6 +44,7 @@ Partial Class OrderProcessingEventForm
         btnConcurrentProcessing = New Button()
         btnDatabaseHistory = New Button()
         btnEntityFrameworkQueries = New Button()
+        btnRestApi = New Button()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -119,9 +120,9 @@ Partial Class OrderProcessingEventForm
         ' lstOrderActivity
         ' 
         lstOrderActivity.FormattingEnabled = True
-        lstOrderActivity.Location = New Point(35, 447)
+        lstOrderActivity.Location = New Point(35, 487)
         lstOrderActivity.Name = "lstOrderActivity"
-        lstOrderActivity.Size = New Size(707, 144)
+        lstOrderActivity.Size = New Size(707, 104)
         lstOrderActivity.TabIndex = 5
         ' 
         ' lblProcessedCount
@@ -138,7 +139,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblRejectedCount.AutoSize = True
         lblRejectedCount.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblRejectedCount.Location = New Point(556, 85)
+        lblRejectedCount.Location = New Point(556, 65)
         lblRejectedCount.Name = "lblRejectedCount"
         lblRejectedCount.Size = New Size(97, 25)
         lblRejectedCount.TabIndex = 6
@@ -148,7 +149,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblTotalRevenue.AutoSize = True
         lblTotalRevenue.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblTotalRevenue.Location = New Point(556, 139)
+        lblTotalRevenue.Location = New Point(556, 103)
         lblTotalRevenue.Name = "lblTotalRevenue"
         lblTotalRevenue.Size = New Size(131, 25)
         lblTotalRevenue.TabIndex = 6
@@ -158,7 +159,7 @@ Partial Class OrderProcessingEventForm
         ' 
         lblProcessingStatus.AutoSize = True
         lblProcessingStatus.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblProcessingStatus.Location = New Point(556, 188)
+        lblProcessingStatus.Location = New Point(556, 152)
         lblProcessingStatus.Name = "lblProcessingStatus"
         lblProcessingStatus.Size = New Size(60, 25)
         lblProcessingStatus.TabIndex = 6
@@ -216,7 +217,7 @@ Partial Class OrderProcessingEventForm
         ' btnOpenReport
         ' 
         btnOpenReport.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnOpenReport.Location = New Point(565, 222)
+        btnOpenReport.Location = New Point(556, 189)
         btnOpenReport.Name = "btnOpenReport"
         btnOpenReport.Size = New Size(224, 44)
         btnOpenReport.TabIndex = 7
@@ -237,7 +238,7 @@ Partial Class OrderProcessingEventForm
         ' btnConcurrentProcessing
         ' 
         btnConcurrentProcessing.Font = New Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnConcurrentProcessing.Location = New Point(565, 289)
+        btnConcurrentProcessing.Location = New Point(556, 250)
         btnConcurrentProcessing.Name = "btnConcurrentProcessing"
         btnConcurrentProcessing.Size = New Size(286, 36)
         btnConcurrentProcessing.TabIndex = 9
@@ -246,7 +247,7 @@ Partial Class OrderProcessingEventForm
         ' 
         ' btnDatabaseHistory
         ' 
-        btnDatabaseHistory.Location = New Point(571, 349)
+        btnDatabaseHistory.Location = New Point(556, 309)
         btnDatabaseHistory.Name = "btnDatabaseHistory"
         btnDatabaseHistory.Size = New Size(267, 36)
         btnDatabaseHistory.TabIndex = 10
@@ -255,18 +256,28 @@ Partial Class OrderProcessingEventForm
         ' 
         ' btnEntityFrameworkQueries
         ' 
-        btnEntityFrameworkQueries.Location = New Point(572, 404)
+        btnEntityFrameworkQueries.Location = New Point(557, 360)
         btnEntityFrameworkQueries.Name = "btnEntityFrameworkQueries"
         btnEntityFrameworkQueries.Size = New Size(223, 35)
         btnEntityFrameworkQueries.TabIndex = 11
         btnEntityFrameworkQueries.Text = "EF Core Queries"
         btnEntityFrameworkQueries.UseVisualStyleBackColor = True
         ' 
+        ' btnRestApi
+        ' 
+        btnRestApi.Location = New Point(565, 412)
+        btnRestApi.Name = "btnRestApi"
+        btnRestApi.Size = New Size(215, 29)
+        btnRestApi.TabIndex = 12
+        btnRestApi.Text = "REST API Demo"
+        btnRestApi.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(btnRestApi)
         Controls.Add(btnEntityFrameworkQueries)
         Controls.Add(btnDatabaseHistory)
         Controls.Add(btnConcurrentProcessing)
@@ -319,4 +330,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents btnConcurrentProcessing As Button
     Friend WithEvents btnDatabaseHistory As Button
     Friend WithEvents btnEntityFrameworkQueries As Button
+    Friend WithEvents btnRestApi As Button
 End Class

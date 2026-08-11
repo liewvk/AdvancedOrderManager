@@ -4,7 +4,6 @@ Option Infer On
 
 Imports System.Collections.Generic
 Imports System.Linq
-Imports System.Net.Http
 Imports System.Threading
 Imports AdvancedOrderManager.Application
 Imports Microsoft.Extensions.Logging
@@ -62,6 +61,9 @@ Public Class RestApiForm
         txtBody.Text =
             "This post was submitted from a VB.NET " &
             "Windows Forms application."
+
+        lblStatus.Text =
+            "Ready"
     End Sub
 
     Private Async Sub btnLoadPosts_Click(
@@ -86,33 +88,39 @@ Public Class RestApiForm
                     userId,
                     _cancellationSource.Token)
 
-            DisplayPosts(posts)
+            DisplayPosts(
+                posts)
 
             lblStatus.Text =
                 $"{posts.Count} posts loaded for user {userId}."
-
-        Catch ex As TaskCanceledException
-
-            lblStatus.Text =
-                "The HTTP request timed out."
 
         Catch ex As OperationCanceledException
 
             lblStatus.Text =
                 "The HTTP request was cancelled."
 
-        Catch ex As HttpRequestException
+        Catch ex As ExternalApiTimeoutException
 
-            HandleHttpError(ex)
+            HandleApiTimeout(
+                ex)
+
+        Catch ex As ExternalApiUnavailableException
+
+            HandleApiUnavailable(
+                ex)
+
+        Catch ex As ExternalApiException
+
+            HandleApiError(
+                ex)
 
         Catch ex As Exception
 
-            HandleUnexpectedError(ex)
+            HandleUnexpectedError(
+                ex)
 
         Finally
-
             EndOperation()
-
         End Try
     End Sub
 
@@ -140,7 +148,8 @@ Public Class RestApiForm
 
             If post Is Nothing Then
 
-                dgvPosts.DataSource = Nothing
+                dgvPosts.DataSource =
+                    Nothing
 
                 lblStatus.Text =
                     $"Post {postId} was not found."
@@ -148,10 +157,9 @@ Public Class RestApiForm
                 Return
             End If
 
-            Dim results As New List(
-                Of ExternalPost) From {
-                    post
-                }
+            Dim results As New List(Of ExternalPost) From {
+                post
+            }
 
             DisplayPosts(
                 results.AsReadOnly())
@@ -165,28 +173,33 @@ Public Class RestApiForm
             lblStatus.Text =
                 $"Post {post.Id} loaded successfully."
 
-        Catch ex As TaskCanceledException
-
-            lblStatus.Text =
-                "The HTTP request timed out."
-
         Catch ex As OperationCanceledException
 
             lblStatus.Text =
                 "The HTTP request was cancelled."
 
-        Catch ex As HttpRequestException
+        Catch ex As ExternalApiTimeoutException
 
-            HandleHttpError(ex)
+            HandleApiTimeout(
+                ex)
+
+        Catch ex As ExternalApiUnavailableException
+
+            HandleApiUnavailable(
+                ex)
+
+        Catch ex As ExternalApiException
+
+            HandleApiError(
+                ex)
 
         Catch ex As Exception
 
-            HandleUnexpectedError(ex)
+            HandleUnexpectedError(
+                ex)
 
         Finally
-
             EndOperation()
-
         End Try
     End Sub
 
@@ -210,6 +223,7 @@ Public Class RestApiForm
                 MessageBoxIcon.Warning)
 
             txtTitle.Focus()
+
             Return
         End If
 
@@ -224,6 +238,7 @@ Public Class RestApiForm
                 MessageBoxIcon.Warning)
 
             txtBody.Focus()
+
             Return
         End If
 
@@ -242,10 +257,9 @@ Public Class RestApiForm
                     request,
                     _cancellationSource.Token)
 
-            Dim results As New List(
-                Of ExternalPost) From {
-                    createdPost
-                }
+            Dim results As New List(Of ExternalPost) From {
+                createdPost
+            }
 
             DisplayPosts(
                 results.AsReadOnly())
@@ -264,28 +278,33 @@ Public Class RestApiForm
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information)
 
-        Catch ex As TaskCanceledException
-
-            lblStatus.Text =
-                "The HTTP request timed out."
-
         Catch ex As OperationCanceledException
 
             lblStatus.Text =
                 "The HTTP request was cancelled."
 
-        Catch ex As HttpRequestException
+        Catch ex As ExternalApiTimeoutException
 
-            HandleHttpError(ex)
+            HandleApiTimeout(
+                ex)
+
+        Catch ex As ExternalApiUnavailableException
+
+            HandleApiUnavailable(
+                ex)
+
+        Catch ex As ExternalApiException
+
+            HandleApiError(
+                ex)
 
         Catch ex As Exception
 
-            HandleUnexpectedError(ex)
+            HandleUnexpectedError(
+                ex)
 
         Finally
-
             EndOperation()
-
         End Try
     End Sub
 
@@ -298,7 +317,8 @@ Public Class RestApiForm
             Return
         End If
 
-        btnCancel.Enabled = False
+        btnCancel.Enabled =
+            False
 
         lblStatus.Text =
             "Cancellation requested..."
@@ -309,7 +329,8 @@ Public Class RestApiForm
     Private Sub DisplayPosts(
         posts As IReadOnlyList(Of ExternalPost))
 
-        dgvPosts.DataSource = Nothing
+        dgvPosts.DataSource =
+            Nothing
 
         dgvPosts.DataSource =
             posts.ToList()
@@ -322,6 +343,8 @@ Public Class RestApiForm
 
             _cancellationSource.Dispose()
 
+            _cancellationSource =
+                Nothing
         End If
 
         _cancellationSource =
@@ -343,8 +366,8 @@ Public Class RestApiForm
 
             _cancellationSource.Dispose()
 
-            _cancellationSource = Nothing
-
+            _cancellationSource =
+                Nothing
         End If
     End Sub
 
@@ -379,7 +402,8 @@ Public Class RestApiForm
             isBusy
     End Sub
 
-    Private Function EnsureServiceAvailable() As Boolean
+    Private Function EnsureServiceAvailable() _
+        As Boolean
 
         If _postService IsNot Nothing Then
             Return True
@@ -396,26 +420,72 @@ Public Class RestApiForm
         Return False
     End Function
 
-    Private Sub HandleHttpError(
-        exception As HttpRequestException)
+    Private Sub HandleApiTimeout(
+        exception As ExternalApiTimeoutException)
 
         lblStatus.Text =
-            "The REST API request failed."
+            "The external API timed out."
 
         If _logger IsNot Nothing Then
 
-            _logger.LogError(
+            _logger.LogWarning(
                 exception,
-                "An HTTP request failed.")
+                "The external API operation timed out.")
+        End If
+
+        MessageBox.Show(
+            Me,
+            "The external service took too long to respond." &
+            Environment.NewLine &
+            "Please try again.",
+            "API Timeout",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning)
+    End Sub
+
+    Private Sub HandleApiUnavailable(
+        exception As ExternalApiUnavailableException)
+
+        lblStatus.Text =
+            "The external API is unavailable."
+
+        If _logger IsNot Nothing Then
+
+            _logger.LogWarning(
+                exception,
+                "The external API is currently unavailable.")
         End If
 
         MessageBox.Show(
             Me,
             exception.Message,
-            "HTTP Error",
+            "API Unavailable",
             MessageBoxButtons.OK,
-            MessageBoxIcon.Error)
+            MessageBoxIcon.Warning)
     End Sub
+    Private Sub HandleApiError(
+    exception As ExternalApiException)
+
+        lblStatus.Text =
+        "The external API operation failed."
+
+        If _logger IsNot Nothing Then
+
+            _logger.LogError(
+            exception,
+            "An external API operation failed.")
+
+        End If
+
+        MessageBox.Show(
+        Me,
+        exception.Message,
+        "External API Error",
+        MessageBoxButtons.OK,
+        MessageBoxIcon.Error)
+
+    End Sub
+
 
     Private Sub HandleUnexpectedError(
         exception As Exception)
@@ -444,7 +514,9 @@ Public Class RestApiForm
         Handles MyBase.FormClosing
 
         If _cancellationSource IsNot Nothing Then
+
             _cancellationSource.Cancel()
+
         End If
     End Sub
 

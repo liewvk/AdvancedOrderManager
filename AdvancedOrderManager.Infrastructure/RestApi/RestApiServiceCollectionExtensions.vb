@@ -5,6 +5,7 @@ Option Infer On
 Imports System.Runtime.CompilerServices
 Imports AdvancedOrderManager.Application
 Imports Microsoft.Extensions.DependencyInjection
+Imports Microsoft.Extensions.Http.Resilience
 
 Public Module RestApiServiceCollectionExtensions
 
@@ -12,7 +13,7 @@ Public Module RestApiServiceCollectionExtensions
     Public Function AddExternalRestApi(
         services As IServiceCollection,
         baseAddress As String,
-        timeoutSeconds As Integer) _
+        resilienceOptions As ExternalApiResilienceOptions) _
         As IServiceCollection
 
         If services Is Nothing Then
@@ -26,10 +27,13 @@ Public Module RestApiServiceCollectionExtensions
                 NameOf(baseAddress))
         End If
 
-        If timeoutSeconds <= 0 Then
-            Throw New ArgumentOutOfRangeException(
-                NameOf(timeoutSeconds))
+        If resilienceOptions Is Nothing Then
+            Throw New ArgumentNullException(
+                NameOf(resilienceOptions))
         End If
+
+        ValidateResilienceOptions(
+            resilienceOptions)
 
         Dim apiUri As Uri = Nothing
 
@@ -43,22 +47,82 @@ Public Module RestApiServiceCollectionExtensions
                 NameOf(baseAddress))
         End If
 
-        services.AddHttpClient(
-            Of IExternalPostService,
-               JsonPlaceholderPostService)(
-                Sub(client)
+        Dim httpClientBuilder =
+            services.AddHttpClient(
+                Of IExternalPostService,
+                   JsonPlaceholderPostService)(
+                    Sub(client)
 
-                    client.BaseAddress =
-                        apiUri
+                        client.BaseAddress =
+                            apiUri
 
-                    client.Timeout =
+                    End Sub)
+
+        httpClientBuilder _
+            .AddStandardResilienceHandler(
+                Sub(options)
+
+                    options.Retry.MaxRetryAttempts =
+                        resilienceOptions.MaxRetryAttempts
+
+                    options.Retry.Delay =
                         TimeSpan.FromSeconds(
-                            timeoutSeconds)
+                            resilienceOptions.RetryDelaySeconds)
+
+                    options.Retry _
+                        .DisableForUnsafeHttpMethods()
+
+                    options.AttemptTimeout.Timeout =
+                        TimeSpan.FromSeconds(
+                            resilienceOptions.AttemptTimeoutSeconds)
+
+                    options.TotalRequestTimeout.Timeout =
+                        TimeSpan.FromSeconds(
+                            resilienceOptions.TotalTimeoutSeconds)
 
                 End Sub)
 
         Return services
     End Function
 
-End Module
+    Private Sub ValidateResilienceOptions(
+        options As ExternalApiResilienceOptions)
 
+        If options.MaxRetryAttempts < 0 Then
+
+            Throw New ArgumentOutOfRangeException(
+                NameOf(options.MaxRetryAttempts),
+                "Maximum retry attempts cannot be negative.")
+        End If
+
+        If options.RetryDelaySeconds < 0 Then
+
+            Throw New ArgumentOutOfRangeException(
+                NameOf(options.RetryDelaySeconds),
+                "The retry delay cannot be negative.")
+        End If
+
+        If options.AttemptTimeoutSeconds <= 0 Then
+
+            Throw New ArgumentOutOfRangeException(
+                NameOf(options.AttemptTimeoutSeconds),
+                "The attempt timeout must be greater than zero.")
+        End If
+
+        If options.TotalTimeoutSeconds <= 0 Then
+
+            Throw New ArgumentOutOfRangeException(
+                NameOf(options.TotalTimeoutSeconds),
+                "The total timeout must be greater than zero.")
+        End If
+
+        If options.TotalTimeoutSeconds <
+           options.AttemptTimeoutSeconds Then
+
+            Throw New ArgumentException(
+                "The total timeout cannot be shorter than " &
+                "the timeout for one request attempt.")
+        End If
+    End Sub
+
+End Module

@@ -7,6 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <MyType>WindowsFormsWithCustomSubMain</MyType>
     <RootNamespace>AdvancedOrderManager</RootNamespace>
+    <UserSecretsId>737ab491-13ed-4e8c-8763-f51186fc2c90</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

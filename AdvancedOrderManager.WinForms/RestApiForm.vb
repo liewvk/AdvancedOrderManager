@@ -99,6 +99,11 @@ Public Class RestApiForm
             lblStatus.Text =
                 "The HTTP request was cancelled."
 
+        Catch ex As ExternalApiAuthenticationException
+
+            HandleAuthenticationError(
+        ex)
+
         Catch ex As ExternalApiTimeoutException
 
             HandleApiTimeout(
@@ -518,6 +523,29 @@ Public Class RestApiForm
             _cancellationSource.Cancel()
 
         End If
+    End Sub
+    Private Sub HandleAuthenticationError(
+    exception As ExternalApiAuthenticationException)
+
+        lblStatus.Text =
+        "External API authentication failed."
+
+        If _logger IsNot Nothing Then
+
+            _logger.LogWarning(
+            exception,
+            "The external API authentication " &
+            "configuration is unavailable or invalid.")
+
+        End If
+
+        MessageBox.Show(
+        Me,
+        exception.Message,
+        "API Authentication Error",
+        MessageBoxButtons.OK,
+        MessageBoxIcon.Warning)
+
     End Sub
 
 End Class

@@ -146,6 +146,13 @@ Friend Module Program
                         .GetSection(
                             ExternalApiResilienceOptions.SectionName))
 
+        builder.Services _
+    .Configure(
+        Of ExternalApiAuthenticationOptions)(
+            builder.Configuration _
+                .GetSection(
+                    ExternalApiAuthenticationOptions.SectionName))
+
         Dim externalApiSection =
             builder.Configuration _
                 .GetSection(

@@ -16,6 +16,7 @@ Public Module RestApiServiceCollectionExtensions
         resilienceOptions As ExternalApiResilienceOptions) _
         As IServiceCollection
 
+
         If services Is Nothing Then
             Throw New ArgumentNullException(
                 NameOf(services))
@@ -47,6 +48,9 @@ Public Module RestApiServiceCollectionExtensions
                 NameOf(baseAddress))
         End If
 
+        services.AddTransient(
+    Of ExternalApiAuthenticationHandler)()
+
         Dim httpClientBuilder =
             services.AddHttpClient(
                 Of IExternalPostService,
@@ -57,6 +61,10 @@ Public Module RestApiServiceCollectionExtensions
                             apiUri
 
                     End Sub)
+
+        httpClientBuilder _
+    .AddHttpMessageHandler(
+        Of ExternalApiAuthenticationHandler)()
 
         httpClientBuilder _
             .AddStandardResilienceHandler(

@@ -22,6 +22,7 @@ Partial Class RestApiForm
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        components = New ComponentModel.Container()
         lblUserId = New Label()
         nudUserId = New NumericUpDown()
         btnLoadPosts = New Button()
@@ -36,9 +37,11 @@ Partial Class RestApiForm
         btnCancel = New Button()
         dgvPosts = New DataGridView()
         lblStatus = New Label()
+        errorProviderInput = New ErrorProvider(components)
         CType(nudUserId, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudPostId, ComponentModel.ISupportInitialize).BeginInit()
         CType(dgvPosts, ComponentModel.ISupportInitialize).BeginInit()
+        CType(errorProviderInput, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' lblUserId
@@ -171,6 +174,11 @@ Partial Class RestApiForm
         lblStatus.TabIndex = 0
         lblStatus.Text = "Ready"
         ' 
+        ' errorProviderInput
+        ' 
+        errorProviderInput.BlinkStyle = ErrorBlinkStyle.NeverBlink
+        errorProviderInput.ContainerControl = Me
+        ' 
         ' RestApiForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
@@ -195,6 +203,7 @@ Partial Class RestApiForm
         CType(nudUserId, ComponentModel.ISupportInitialize).EndInit()
         CType(nudPostId, ComponentModel.ISupportInitialize).EndInit()
         CType(dgvPosts, ComponentModel.ISupportInitialize).EndInit()
+        CType(errorProviderInput, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -213,4 +222,5 @@ Partial Class RestApiForm
     Friend WithEvents btnCancel As Button
     Friend WithEvents dgvPosts As DataGridView
     Friend WithEvents lblStatus As Label
+    Friend WithEvents errorProviderInput As ErrorProvider
 End Class

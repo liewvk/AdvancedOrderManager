@@ -14,6 +14,10 @@ Public Class RestApiForm
 
     Private _logger As ILogger(Of RestApiForm)
 
+    Private _requestValidator As IInputValidator(
+        Of CreateExternalPostRequest)
+
+
     Private _cancellationSource As CancellationTokenSource
 
     Public Sub New()
@@ -23,24 +27,32 @@ Public Class RestApiForm
     End Sub
 
     Public Sub New(
-        postService As IExternalPostService,
-        logger As ILogger(Of RestApiForm))
+    postService As IExternalPostService,
+    logger As ILogger(Of RestApiForm),
+    requestValidator As IInputValidator(
+        Of CreateExternalPostRequest))
 
         InitializeComponent()
 
-        If postService Is Nothing Then
-            Throw New ArgumentNullException(
-                NameOf(postService))
-        End If
+        ArgumentNullException.ThrowIfNull(
+        postService)
 
-        If logger Is Nothing Then
-            Throw New ArgumentNullException(
-                NameOf(logger))
-        End If
+        ArgumentNullException.ThrowIfNull(
+        logger)
 
-        _postService = postService
-        _logger = logger
+        ArgumentNullException.ThrowIfNull(
+        requestValidator)
+
+        _postService =
+        postService
+
+        _logger =
+        logger
+
+        _requestValidator =
+        requestValidator
     End Sub
+
 
     Private Sub RestApiForm_Load(
         sender As Object,
@@ -217,41 +229,33 @@ Public Class RestApiForm
             Return
         End If
 
-        If String.IsNullOrWhiteSpace(
-            txtTitle.Text) Then
-
-            MessageBox.Show(
-                Me,
-                "Please enter a post title.",
-                "Title Required",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning)
-
-            txtTitle.Focus()
+        If Not EnsureServiceAvailable() Then
 
             Return
+
         End If
 
-        If String.IsNullOrWhiteSpace(
-            txtBody.Text) Then
-
-            MessageBox.Show(
-                Me,
-                "Please enter post content.",
-                "Content Required",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning)
-
-            txtBody.Focus()
+        If Not EnsureRequestValidatorAvailable() Then
 
             Return
+
         End If
 
-        Dim request As New CreateExternalPostRequest(
-            Decimal.ToInt32(
-                nudUserId.Value),
-            txtTitle.Text,
-            txtBody.Text)
+        Dim request =
+    New CreateExternalPostRequest(
+        Decimal.ToInt32(
+            nudUserId.Value),
+        txtTitle.Text.Trim(),
+        txtBody.Text.Trim())
+
+        If Not ValidateCreateRequest(
+    request) Then
+
+            Return
+
+        End If
+
+
 
         BeginOperation(
             "Sending JSON to the REST API...")
@@ -415,15 +419,67 @@ Public Class RestApiForm
         End If
 
         MessageBox.Show(
-            Me,
-            "REST API services are unavailable. " &
-            "Start the application through Program.Main.",
-            "Service Unavailable",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error)
+        Me,
+        "Input validation services are unavailable. " &
+        "Start the application through Program.Main.",
+        "Validation Service Unavailable",
+        MessageBoxButtons.OK,
+        MessageBoxIcon.Error)
+
 
         Return False
     End Function
+    Private Function ValidateCreateRequest(
+    request As CreateExternalPostRequest) _
+    As Boolean
+
+        errorProviderInput.Clear()
+
+        Dim result As InputValidationResult =
+        _requestValidator.Validate(
+            request)
+
+        If result.IsValid Then
+
+            Return True
+
+        End If
+
+        For Each validationError As InputValidationError In
+        result.Errors
+
+            Select Case validationError.FieldName
+
+                Case NameOf(
+                CreateExternalPostRequest.UserId)
+
+                    errorProviderInput.SetError(
+                    nudUserId,
+                    validationError.Message)
+
+                Case NameOf(
+                CreateExternalPostRequest.Title)
+
+                    errorProviderInput.SetError(
+                    txtTitle,
+                    validationError.Message)
+
+                Case NameOf(
+                CreateExternalPostRequest.Body)
+
+                    errorProviderInput.SetError(
+                    txtBody,
+                    validationError.Message)
+
+            End Select
+        Next
+
+        lblStatus.Text =
+        "Please correct the highlighted input."
+
+        Return False
+    End Function
+
 
     Private Sub HandleApiTimeout(
         exception As ExternalApiTimeoutException)
@@ -546,6 +602,50 @@ Public Class RestApiForm
         MessageBoxButtons.OK,
         MessageBoxIcon.Warning)
 
+    End Sub
+
+    Private Function EnsureRequestValidatorAvailable() As Boolean
+        If _requestValidator IsNot Nothing Then
+            Return True
+        End If
+
+        MessageBox.Show(
+            Me,
+            "Input validation services are unavailable. Start the application through Program.Main.",
+            "Validation Service Unavailable",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Error)
+
+        Return False
+    End Function
+    Private Sub txtTitle_TextChanged(
+    sender As Object,
+    e As EventArgs) _
+    Handles txtTitle.TextChanged
+
+        errorProviderInput.SetError(
+        txtTitle,
+        String.Empty)
+    End Sub
+
+    Private Sub txtBody_TextChanged(
+    sender As Object,
+    e As EventArgs) _
+    Handles txtBody.TextChanged
+
+        errorProviderInput.SetError(
+        txtBody,
+        String.Empty)
+    End Sub
+
+    Private Sub nudUserId_ValueChanged(
+    sender As Object,
+    e As EventArgs) _
+    Handles nudUserId.ValueChanged
+
+        errorProviderInput.SetError(
+        nudUserId,
+        String.Empty)
     End Sub
 
 End Class

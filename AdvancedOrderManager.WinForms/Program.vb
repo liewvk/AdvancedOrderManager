@@ -179,6 +179,16 @@ Friend Module Program
 
         resilienceSection.Bind(
             resilienceOptions)
+        '--------------------------------------------------
+        ' Chapter 15
+        ' Application input validation
+        '--------------------------------------------------
+
+        builder.Services _
+    .AddSingleton(
+        Of IInputValidator(
+            Of CreateExternalPostRequest),
+           CreateExternalPostRequestValidator)()
 
         '--------------------------------------------------
         ' Chapter 5-7

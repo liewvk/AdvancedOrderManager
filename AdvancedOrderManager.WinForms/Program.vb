@@ -189,6 +189,10 @@ Friend Module Program
         Of IInputValidator(
             Of CreateExternalPostRequest),
            CreateExternalPostRequestValidator)()
+        builder.Services _
+    .AddTransient(
+        Of IExternalPostApplicationService,
+           ExternalPostApplicationService)()
 
         '--------------------------------------------------
         ' Chapter 5-7

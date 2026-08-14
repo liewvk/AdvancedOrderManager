@@ -61,6 +61,74 @@ Public Class CreateExternalPostRequestValidatorTests
         result.Errors)
 
     End Sub
+    <TestMethod>
+    <DataRow(199, True)>
+    <DataRow(200, True)>
+    <DataRow(201, False)>
+    Public Sub Validate_TitleLengthBoundary_ReturnsExpectedResult(
+    titleLength As Integer,
+    expectedIsValid As Boolean)
+
+        'Arrange
+
+        Dim title As String =
+        New String(
+            "X"c,
+            titleLength)
+
+        Dim request =
+        New CreateExternalPostRequest(
+            1,
+            title,
+            "Valid body")
+
+        'Act
+
+        Dim result =
+        _validator.Validate(
+            request)
+
+        'Assert
+
+        Assert.AreEqual(
+        expectedIsValid,
+        result.IsValid)
+
+    End Sub
+    <TestMethod>
+    <DataRow(1999, True)>
+    <DataRow(2000, True)>
+    <DataRow(2001, False)>
+    Public Sub Validate_BodyLengthBoundary_ReturnsExpectedResult(
+    bodyLength As Integer,
+    expectedIsValid As Boolean)
+
+        'Arrange
+
+        Dim body As String =
+        New String(
+            "B"c,
+            bodyLength)
+
+        Dim request =
+        New CreateExternalPostRequest(
+            1,
+            "Valid title",
+            body)
+
+        'Act
+
+        Dim result =
+        _validator.Validate(
+            request)
+
+        'Assert
+
+        Assert.AreEqual(
+        expectedIsValid,
+        result.IsValid)
+
+    End Sub
 
 
     <TestMethod>

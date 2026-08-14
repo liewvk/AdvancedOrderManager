@@ -14,11 +14,11 @@ Public Class RestApiForm
 
     Private _logger As ILogger(Of RestApiForm)
 
-    Private _requestValidator As IInputValidator(
-        Of CreateExternalPostRequest)
-
+    Private _postApplicationService As IExternalPostApplicationService
 
     Private _cancellationSource As CancellationTokenSource
+
+    Private _requestValidator As IInputValidator
 
     Public Sub New()
 
@@ -28,29 +28,31 @@ Public Class RestApiForm
 
     Public Sub New(
     postService As IExternalPostService,
+    postApplicationService As IExternalPostApplicationService,
     logger As ILogger(Of RestApiForm),
-    requestValidator As IInputValidator(
-        Of CreateExternalPostRequest))
+    Optional requestValidator As IInputValidator = Nothing)
 
         InitializeComponent()
 
         ArgumentNullException.ThrowIfNull(
-        postService)
+            postService)
 
         ArgumentNullException.ThrowIfNull(
-        logger)
+            postApplicationService)
 
         ArgumentNullException.ThrowIfNull(
-        requestValidator)
+            logger)
 
         _postService =
-        postService
+            postService
+
+        _postApplicationService =
+            postApplicationService
 
         _logger =
-        logger
+            logger
 
-        _requestValidator =
-        requestValidator
+        _requestValidator = requestValidator
     End Sub
 
 
@@ -225,53 +227,55 @@ Public Class RestApiForm
         e As EventArgs) _
         Handles btnCreatePost.Click
 
-        If Not EnsureServiceAvailable() Then
-            Return
-        End If
-
-        If Not EnsureServiceAvailable() Then
+        If Not EnsureApplicationServiceAvailable() Then
 
             Return
 
         End If
 
-        If Not EnsureRequestValidatorAvailable() Then
-
-            Return
-
-        End If
+        errorProviderInput.Clear()
 
         Dim request =
-    New CreateExternalPostRequest(
-        Decimal.ToInt32(
-            nudUserId.Value),
-        txtTitle.Text.Trim(),
-        txtBody.Text.Trim())
-
-        If Not ValidateCreateRequest(
-    request) Then
-
-            Return
-
-        End If
-
-
+            New CreateExternalPostRequest(
+                Decimal.ToInt32(
+                    nudUserId.Value),
+                txtTitle.Text,
+                txtBody.Text)
 
         BeginOperation(
-            "Sending JSON to the REST API...")
+            "Validating and sending JSON to the REST API...")
 
         Try
-            Dim createdPost =
-                Await _postService.CreatePostAsync(
+            Dim submissionResult =
+                Await _postApplicationService.CreatePostAsync(
                     request,
                     _cancellationSource.Token)
+
+            If Not submissionResult.ValidationResult.IsValid Then
+
+                DisplayValidationErrors(
+                    submissionResult.ValidationResult)
+
+                Return
+            End If
+
+            Dim createdPost =
+                submissionResult.CreatedPost
+
+            If createdPost Is Nothing Then
+
+                Throw New InvalidOperationException(
+                    "The external post operation completed " &
+                    "without returning a post.")
+
+            End If
 
             Dim results As New List(Of ExternalPost) From {
                 createdPost
             }
 
             DisplayPosts(
-                results.AsReadOnly())
+            results.AsReadOnly())
 
             lblStatus.Text =
                 $"The API returned post ID {createdPost.Id}."
@@ -291,6 +295,11 @@ Public Class RestApiForm
 
             lblStatus.Text =
                 "The HTTP request was cancelled."
+
+        Catch ex As ExternalApiAuthenticationException
+
+            HandleAuthenticationError(
+                ex)
 
         Catch ex As ExternalApiTimeoutException
 
@@ -313,8 +322,11 @@ Public Class RestApiForm
                 ex)
 
         Finally
+
             EndOperation()
+
         End Try
+
     End Sub
 
     Private Sub btnCancel_Click(
@@ -410,43 +422,37 @@ Public Class RestApiForm
         UseWaitCursor =
             isBusy
     End Sub
+    Private Function EnsureApplicationServiceAvailable() _
+    As Boolean
 
-    Private Function EnsureServiceAvailable() _
-        As Boolean
+        If _postApplicationService IsNot Nothing Then
 
-        If _postService IsNot Nothing Then
             Return True
+
         End If
 
         MessageBox.Show(
         Me,
-        "Input validation services are unavailable. " &
+        "Application services are unavailable. " &
         "Start the application through Program.Main.",
-        "Validation Service Unavailable",
+        "Application Service Unavailable",
         MessageBoxButtons.OK,
         MessageBoxIcon.Error)
 
-
         Return False
     End Function
-    Private Function ValidateCreateRequest(
-    request As CreateExternalPostRequest) _
-    As Boolean
+
+
+    Private Sub DisplayValidationErrors(
+    validationResult As InputValidationResult)
+
+        ArgumentNullException.ThrowIfNull(
+        validationResult)
 
         errorProviderInput.Clear()
 
-        Dim result As InputValidationResult =
-        _requestValidator.Validate(
-            request)
-
-        If result.IsValid Then
-
-            Return True
-
-        End If
-
         For Each validationError As InputValidationError In
-        result.Errors
+        validationResult.Errors
 
             Select Case validationError.FieldName
 
@@ -476,9 +482,8 @@ Public Class RestApiForm
 
         lblStatus.Text =
         "Please correct the highlighted input."
+    End Sub
 
-        Return False
-    End Function
 
 
     Private Sub HandleApiTimeout(

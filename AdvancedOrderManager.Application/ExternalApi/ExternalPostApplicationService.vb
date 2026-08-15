@@ -4,6 +4,7 @@ Option Infer On
 
 Imports System.Threading
 Imports System.Threading.Tasks
+Imports Microsoft.Extensions.Logging
 
 Public NotInheritable Class ExternalPostApplicationService
     Implements IExternalPostApplicationService
@@ -13,10 +14,15 @@ Public NotInheritable Class ExternalPostApplicationService
     Private ReadOnly _requestValidator As IInputValidator(
             Of CreateExternalPostRequest)
 
+    Private ReadOnly _logger As ILogger(
+            Of ExternalPostApplicationService)
+
     Public Sub New(
         postService As IExternalPostService,
         requestValidator As IInputValidator(
-            Of CreateExternalPostRequest))
+            Of CreateExternalPostRequest),
+        logger As ILogger(
+            Of ExternalPostApplicationService))
 
         ArgumentNullException.ThrowIfNull(
             postService)
@@ -24,11 +30,17 @@ Public NotInheritable Class ExternalPostApplicationService
         ArgumentNullException.ThrowIfNull(
             requestValidator)
 
+        ArgumentNullException.ThrowIfNull(
+            logger)
+
         _postService =
             postService
 
         _requestValidator =
             requestValidator
+
+        _logger =
+            logger
     End Sub
 
     Public Async Function CreatePostAsync(
@@ -40,11 +52,23 @@ Public NotInheritable Class ExternalPostApplicationService
         ArgumentNullException.ThrowIfNull(
             request)
 
+        _logger.LogDebug(
+            "Validating external post request " &
+            "for user {UserId}.",
+            request.UserId)
+
         Dim validationResult =
             _requestValidator.Validate(
                 request)
 
         If Not validationResult.IsValid Then
+
+            _logger.LogWarning(
+                "External post request for user " &
+                "{UserId} failed validation with " &
+                "{ErrorCount} error(s).",
+                request.UserId,
+                validationResult.Errors.Count)
 
             Return ExternalPostSubmissionResult _
                 .ValidationFailed(
@@ -58,10 +82,31 @@ Public NotInheritable Class ExternalPostApplicationService
                 request.Title.Trim(),
                 request.Body.Trim())
 
+        _logger.LogInformation(
+            "Submitting external post for user {UserId}.",
+            normalizedRequest.UserId)
+
         Dim createdPost =
             Await _postService.CreatePostAsync(
                 normalizedRequest,
                 cancellationToken)
+
+        If createdPost Is Nothing Then
+
+            _logger.LogError(
+                "The external post service returned " &
+                "no result for user {UserId}.",
+                normalizedRequest.UserId)
+
+            Throw New ExternalApiException(
+                "The external API returned an empty result.")
+        End If
+
+        _logger.LogInformation(
+            "External post {PostId} was created " &
+            "for user {UserId}.",
+            createdPost.Id,
+            normalizedRequest.UserId)
 
         Return ExternalPostSubmissionResult _
             .Success(
@@ -69,4 +114,3 @@ Public NotInheritable Class ExternalPostApplicationService
     End Function
 
 End Class
-

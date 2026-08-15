@@ -3,22 +3,20 @@ Option Strict On
 Option Infer On
 
 Imports System.Collections.Generic
-Imports System.Linq
 Imports System.Threading
 Imports AdvancedOrderManager.Application
+Imports AdvancedOrderManager.Infrastructure
 Imports Microsoft.Extensions.Logging
 
 Public Class RestApiForm
 
     Private _postService As IExternalPostService
 
-    Private _logger As ILogger(Of RestApiForm)
-
     Private _postApplicationService As IExternalPostApplicationService
 
-    Private _cancellationSource As CancellationTokenSource
+    Private _logger As ILogger(Of RestApiForm)
 
-    Private _requestValidator As IInputValidator
+    Private _cancellationSource As CancellationTokenSource
 
     Public Sub New()
 
@@ -27,10 +25,9 @@ Public Class RestApiForm
     End Sub
 
     Public Sub New(
-    postService As IExternalPostService,
-    postApplicationService As IExternalPostApplicationService,
-    logger As ILogger(Of RestApiForm),
-    Optional requestValidator As IInputValidator = Nothing)
+        postService As IExternalPostService,
+        postApplicationService As IExternalPostApplicationService,
+        logger As ILogger(Of RestApiForm))
 
         InitializeComponent()
 
@@ -52,180 +49,15 @@ Public Class RestApiForm
         _logger =
             logger
 
-        _requestValidator = requestValidator
     End Sub
 
+    Private Sub RestApiForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
-    Private Sub RestApiForm_Load(
-        sender As Object,
-        e As EventArgs) _
-        Handles MyBase.Load
-
-        If _postService Is Nothing Then
-
-            lblStatus.Text =
-                "REST API services are unavailable."
-
-            Return
-        End If
-
-        txtTitle.Text =
-            "Advanced Order Manager API Test"
-
-        txtBody.Text =
-            "This post was submitted from a VB.NET " &
-            "Windows Forms application."
-
-        lblStatus.Text =
-            "Ready"
     End Sub
-
-    Private Async Sub btnLoadPosts_Click(
-        sender As Object,
-        e As EventArgs) _
-        Handles btnLoadPosts.Click
-
-        If Not EnsureServiceAvailable() Then
-            Return
-        End If
-
-        Dim userId As Integer =
-            Decimal.ToInt32(
-                nudUserId.Value)
-
-        BeginOperation(
-            "Loading posts from the REST API...")
-
-        Try
-            Dim posts =
-                Await _postService.GetPostsAsync(
-                    userId,
-                    _cancellationSource.Token)
-
-            DisplayPosts(
-                posts)
-
-            lblStatus.Text =
-                $"{posts.Count} posts loaded for user {userId}."
-
-        Catch ex As OperationCanceledException
-
-            lblStatus.Text =
-                "The HTTP request was cancelled."
-
-        Catch ex As ExternalApiAuthenticationException
-
-            HandleAuthenticationError(
-        ex)
-
-        Catch ex As ExternalApiTimeoutException
-
-            HandleApiTimeout(
-                ex)
-
-        Catch ex As ExternalApiUnavailableException
-
-            HandleApiUnavailable(
-                ex)
-
-        Catch ex As ExternalApiException
-
-            HandleApiError(
-                ex)
-
-        Catch ex As Exception
-
-            HandleUnexpectedError(
-                ex)
-
-        Finally
-            EndOperation()
-        End Try
-    End Sub
-
-    Private Async Sub btnFindPost_Click(
-        sender As Object,
-        e As EventArgs) _
-        Handles btnFindPost.Click
-
-        If Not EnsureServiceAvailable() Then
-            Return
-        End If
-
-        Dim postId As Integer =
-            Decimal.ToInt32(
-                nudPostId.Value)
-
-        BeginOperation(
-            $"Requesting post {postId}...")
-
-        Try
-            Dim post =
-                Await _postService.GetPostAsync(
-                    postId,
-                    _cancellationSource.Token)
-
-            If post Is Nothing Then
-
-                dgvPosts.DataSource =
-                    Nothing
-
-                lblStatus.Text =
-                    $"Post {postId} was not found."
-
-                Return
-            End If
-
-            Dim results As New List(Of ExternalPost) From {
-                post
-            }
-
-            DisplayPosts(
-                results.AsReadOnly())
-
-            txtTitle.Text =
-                post.Title
-
-            txtBody.Text =
-                post.Body
-
-            lblStatus.Text =
-                $"Post {post.Id} loaded successfully."
-
-        Catch ex As OperationCanceledException
-
-            lblStatus.Text =
-                "The HTTP request was cancelled."
-
-        Catch ex As ExternalApiTimeoutException
-
-            HandleApiTimeout(
-                ex)
-
-        Catch ex As ExternalApiUnavailableException
-
-            HandleApiUnavailable(
-                ex)
-
-        Catch ex As ExternalApiException
-
-            HandleApiError(
-                ex)
-
-        Catch ex As Exception
-
-            HandleUnexpectedError(
-                ex)
-
-        Finally
-            EndOperation()
-        End Try
-    End Sub
-
     Private Async Sub btnCreatePost_Click(
-        sender As Object,
-        e As EventArgs) _
-        Handles btnCreatePost.Click
+    sender As Object,
+    e As EventArgs) _
+    Handles btnCreatePost.Click
 
         If Not EnsureApplicationServiceAvailable() Then
 
@@ -236,51 +68,78 @@ Public Class RestApiForm
         errorProviderInput.Clear()
 
         Dim request =
-            New CreateExternalPostRequest(
-                Decimal.ToInt32(
-                    nudUserId.Value),
-                txtTitle.Text,
-                txtBody.Text)
+        New CreateExternalPostRequest(
+            Decimal.ToInt32(
+                nudUserId.Value),
+            txtTitle.Text,
+            txtBody.Text)
 
         BeginOperation(
-            "Validating and sending JSON to the REST API...")
+        "Validating and sending JSON to the REST API...")
 
-        Try
-            Dim submissionResult =
+        Using diagnosticScope =
+        New OperationDiagnosticsScope(
+            _logger,
+            "CreateExternalPost")
+
+            Try
+                _logger.LogInformation(
+                "Create external post requested " &
+                "for user {UserId}.",
+                request.UserId)
+
+                Dim submissionResult =
                 Await _postApplicationService.CreatePostAsync(
                     request,
                     _cancellationSource.Token)
 
-            If Not submissionResult.ValidationResult.IsValid Then
+                If Not submissionResult.ValidationResult.IsValid Then
 
-                DisplayValidationErrors(
-                    submissionResult.ValidationResult)
+                    diagnosticScope.MarkRejected()
 
-                Return
-            End If
+                    _logger.LogWarning(
+                    "Create external post was rejected " &
+                    "with {ErrorCount} validation error(s).",
+                    submissionResult _
+                        .ValidationResult _
+                        .Errors _
+                        .Count)
 
-            Dim createdPost =
+                    DisplayValidationErrors(submissionResult.ValidationResult)
+
+                    Return
+                End If
+
+                Dim createdPost =
                 submissionResult.CreatedPost
 
-            If createdPost Is Nothing Then
+                If createdPost Is Nothing Then
 
-                Throw New InvalidOperationException(
+                    diagnosticScope.MarkFailed()
+
+                    Throw New InvalidOperationException(
                     "The external post operation completed " &
                     "without returning a post.")
+                End If
 
-            End If
+                Dim results As New List(Of ExternalPost) From {
+                    createdPost
+                }
 
-            Dim results As New List(Of ExternalPost) From {
-                createdPost
-            }
+                DisplayPosts(
+                results.AsReadOnly())
 
-            DisplayPosts(
-            results.AsReadOnly())
+                diagnosticScope.MarkSucceeded()
 
-            lblStatus.Text =
+                _logger.LogInformation(
+                "Create external post completed " &
+                "successfully with post ID {PostId}.",
+                createdPost.Id)
+
+                lblStatus.Text =
                 $"The API returned post ID {createdPost.Id}."
 
-            MessageBox.Show(
+                MessageBox.Show(
                 Me,
                 "The demonstration POST request completed " &
                 "successfully." &
@@ -291,366 +150,314 @@ Public Class RestApiForm
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information)
 
-        Catch ex As OperationCanceledException
+            Catch ex As OperationCanceledException
 
-            lblStatus.Text =
+                diagnosticScope.MarkCancelled()
+
+                _logger.LogInformation(
+                "Create external post was cancelled.")
+
+                lblStatus.Text =
                 "The HTTP request was cancelled."
 
-        Catch ex As ExternalApiAuthenticationException
+            Catch ex As ExternalApiAuthenticationException
 
-            HandleAuthenticationError(
+                diagnosticScope.MarkFailed()
+
+                HandleAuthenticationError(
                 ex)
 
-        Catch ex As ExternalApiTimeoutException
+            Catch ex As ExternalApiTimeoutException
 
-            HandleApiTimeout(
+                diagnosticScope.MarkFailed()
+
+                HandleApiTimeout(
                 ex)
 
-        Catch ex As ExternalApiUnavailableException
+            Catch ex As ExternalApiUnavailableException
 
-            HandleApiUnavailable(
+                diagnosticScope.MarkFailed()
+
+                HandleApiUnavailable(
                 ex)
 
-        Catch ex As ExternalApiException
+            Catch ex As ExternalApiException
 
-            HandleApiError(
+                diagnosticScope.MarkFailed()
+
+                HandleApiError(
                 ex)
 
-        Catch ex As Exception
+            Catch ex As Exception
 
-            HandleUnexpectedError(
+                diagnosticScope.MarkFailed()
+
+                HandleUnexpectedError(
                 ex)
 
-        Finally
+            Finally
 
-            EndOperation()
+                EndOperation()
 
-        End Try
+            End Try
+
+        End Using
 
     End Sub
 
-    Private Sub btnCancel_Click(
-        sender As Object,
-        e As EventArgs) _
-        Handles btnCancel.Click
-
-        If _cancellationSource Is Nothing Then
-            Return
+    Private Function EnsureApplicationServiceAvailable() As Boolean
+        If _postApplicationService Is Nothing Then
+            MessageBox.Show(Me, "Application service is not available.", "Configuration error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
         End If
 
-        btnCancel.Enabled =
-            False
-
-        lblStatus.Text =
-            "Cancellation requested..."
-
-        _cancellationSource.Cancel()
-    End Sub
-
-    Private Sub DisplayPosts(
-        posts As IReadOnlyList(Of ExternalPost))
-
-        dgvPosts.DataSource =
-            Nothing
-
-        dgvPosts.DataSource =
-            posts.ToList()
-    End Sub
-
-    Private Sub BeginOperation(
-        statusMessage As String)
-
-        If _cancellationSource IsNot Nothing Then
-
-            _cancellationSource.Dispose()
-
-            _cancellationSource =
-                Nothing
+        If _postService Is Nothing Then
+            MessageBox.Show(Me, "Post service is not available.", "Configuration error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
         End If
 
-        _cancellationSource =
-            New CancellationTokenSource()
+        If _logger Is Nothing Then
+            MessageBox.Show(Me, "Logger is not available.", "Configuration error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
+        End If
 
-        SetBusyState(
-            True)
+        If _cancellationSource Is Nothing OrElse _cancellationSource.IsCancellationRequested Then
+            _cancellationSource = New CancellationTokenSource()
+        End If
 
-        lblStatus.Text =
-            statusMessage
+        Return True
+    End Function
+
+    Private Sub BeginOperation(message As String)
+        ' Update status and UI for a running operation
+        If lblStatus IsNot Nothing Then lblStatus.Text = message
+        btnCreatePost.Enabled = False
+        Cursor = Cursors.WaitCursor
     End Sub
 
     Private Sub EndOperation()
-
-        SetBusyState(
-            False)
-
-        If _cancellationSource IsNot Nothing Then
-
-            _cancellationSource.Dispose()
-
-            _cancellationSource =
-                Nothing
-        End If
+        ' Restore UI after operation completes
+        btnCreatePost.Enabled = True
+        Cursor = Cursors.Default
     End Sub
 
-    Private Sub SetBusyState(
-        isBusy As Boolean)
-
-        btnLoadPosts.Enabled =
-            Not isBusy
-
-        btnFindPost.Enabled =
-            Not isBusy
-
-        btnCreatePost.Enabled =
-            Not isBusy
-
-        btnCancel.Enabled =
-            isBusy
-
-        nudUserId.Enabled =
-            Not isBusy
-
-        nudPostId.Enabled =
-            Not isBusy
-
-        txtTitle.Enabled =
-            Not isBusy
-
-        txtBody.Enabled =
-            Not isBusy
-
-        UseWaitCursor =
-            isBusy
-    End Sub
-    Private Function EnsureApplicationServiceAvailable() _
-    As Boolean
-
-        If _postApplicationService IsNot Nothing Then
-
-            Return True
-
+    Private Sub DisplayValidationErrors(validationResult As Object)
+        If validationResult Is Nothing Then
+            Return
         End If
 
-        MessageBox.Show(
-        Me,
-        "Application services are unavailable. " &
-        "Start the application through Program.Main.",
-        "Application Service Unavailable",
-        MessageBoxButtons.OK,
-        MessageBoxIcon.Error)
+        Try
+            Dim errorsProp = validationResult.GetType().GetProperty("Errors")
+            If errorsProp Is Nothing Then
+                MessageBox.Show(Me, "Validation failed (no errors property).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
 
-        Return False
-    End Function
+            Dim errorsObj = errorsProp.GetValue(validationResult)
+            Dim errors = TryCast(errorsObj, System.Collections.IEnumerable)
+            If errors Is Nothing Then
+                MessageBox.Show(Me, "Validation failed (errors not enumerable).", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
 
+            errorProviderInput.Clear()
 
-    Private Sub DisplayValidationErrors(
-    validationResult As InputValidationResult)
+            For Each errorItem In errors
+                If errorItem Is Nothing Then
+                    Continue For
+                End If
 
-        ArgumentNullException.ThrowIfNull(
-        validationResult)
+                Dim errType = errorItem.GetType()
+                Dim messageProp = errType.GetProperty("ErrorMessage")
+                If messageProp Is Nothing Then
+                    messageProp = errType.GetProperty("Message")
+                End If
+                Dim propertyNameProp = errType.GetProperty("PropertyName")
 
-        errorProviderInput.Clear()
+                Dim message As String = If(messageProp IsNot Nothing, Convert.ToString(messageProp.GetValue(errorItem)), Convert.ToString(errorItem))
+                Dim propertyName As String = If(propertyNameProp IsNot Nothing, Convert.ToString(propertyNameProp.GetValue(errorItem)), String.Empty)
 
-        For Each validationError As InputValidationError In
-        validationResult.Errors
+                Select Case propertyName
+                    Case "UserId", "UserID", "User Id"
+                        errorProviderInput.SetError(nudUserId, message)
+                    Case "Title"
+                        errorProviderInput.SetError(txtTitle, message)
+                    Case "Body"
+                        errorProviderInput.SetError(txtBody, message)
+                    Case Else
+                        ' fallback: append to status label
+                        lblStatus.Text = If(String.IsNullOrEmpty(lblStatus.Text), message, lblStatus.Text & " " & message)
+                End Select
+            Next
 
-            Select Case validationError.FieldName
+        Catch
+            MessageBox.Show(Me, "Validation failed.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        End Try
+    End Sub
 
-                Case NameOf(
-                CreateExternalPostRequest.UserId)
+    Private Sub HandleAuthenticationError(ex As ExternalApiAuthenticationException)
+        If _logger IsNot Nothing Then
+            _logger.LogWarning("Create external post failed due to authentication: {Message}", ex.Message)
+        End If
 
-                    errorProviderInput.SetError(
-                    nudUserId,
-                    validationError.Message)
+        lblStatus.Text = "Authentication failed: " & ex.Message
 
-                Case NameOf(
-                CreateExternalPostRequest.Title)
+        MessageBox.Show(Me,
+                        "Authentication failed when calling the external API." & Environment.NewLine & Environment.NewLine & ex.Message,
+                        "Authentication error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error)
+    End Sub
 
-                    errorProviderInput.SetError(
-                    txtTitle,
-                    validationError.Message)
+    Private Sub HandleApiTimeout(ex As ExternalApiTimeoutException)
+        If _logger IsNot Nothing Then
+            _logger.LogWarning("Create external post failed due to timeout: {Message}", ex.Message)
+        End If
 
-                Case NameOf(
-                CreateExternalPostRequest.Body)
+        lblStatus.Text = "Request timed out: " & ex.Message
 
-                    errorProviderInput.SetError(
-                    txtBody,
-                    validationError.Message)
+        MessageBox.Show(Me,
+                        "The request to the external API timed out." & Environment.NewLine & Environment.NewLine & ex.Message,
+                        "Timeout",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning)
+    End Sub
 
-            End Select
+    Private Sub HandleApiUnavailable(ex As ExternalApiUnavailableException)
+        If _logger IsNot Nothing Then
+            _logger.LogWarning("Create external post failed because the external API is unavailable: {Message}", ex.Message)
+        End If
+
+        lblStatus.Text = "API unavailable: " & ex.Message
+
+        MessageBox.Show(Me,
+                        "The external API is currently unavailable." & Environment.NewLine & Environment.NewLine & ex.Message,
+                        "API Unavailable",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning)
+    End Sub
+
+    Private Sub HandleApiError(ex As ExternalApiException)
+        If _logger IsNot Nothing Then
+            _logger.LogWarning("Create external post failed due to API error: {Message}", ex.Message)
+        End If
+
+        lblStatus.Text = "API error: " & ex.Message
+
+        MessageBox.Show(Me,
+                    "An error occurred calling the external API." & Environment.NewLine & Environment.NewLine & ex.Message,
+                    "API error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error)
+    End Sub
+
+    Private Sub HandleUnexpectedError(ex As Exception)
+        If _logger IsNot Nothing Then
+            _logger.LogError(ex, "Create external post failed due to an unexpected error: {Message}", ex.Message)
+        End If
+
+        lblStatus.Text = "Unexpected error: " & ex.Message
+
+        MessageBox.Show(Me,
+                        "An unexpected error occurred while calling the external API." & Environment.NewLine & Environment.NewLine & ex.Message,
+                        "Unexpected error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error)
+    End Sub
+
+    Private Sub DisplayPosts(posts As IReadOnlyList(Of ExternalPost))
+        If posts Is Nothing OrElse posts.Count = 0 Then
+            If lblStatus IsNot Nothing Then lblStatus.Text = "No posts to display."
+            Return
+        End If
+
+        Dim sb As New System.Text.StringBuilder()
+        For Each p In posts
+            If p IsNot Nothing Then
+                sb.Append("ID: ")
+                sb.Append(p.Id)
+                sb.Append(" ")
+                sb.AppendLine(Convert.ToString(If(GetType(ExternalPost).GetProperty("Title")?.GetValue(p), String.Empty)))
+            End If
         Next
 
-        lblStatus.Text =
-        "Please correct the highlighted input."
+        If lblStatus IsNot Nothing Then lblStatus.Text = sb.ToString().Trim()
     End Sub
 
-
-
-    Private Sub HandleApiTimeout(
-        exception As ExternalApiTimeoutException)
-
-        lblStatus.Text =
-            "The external API timed out."
-
-        If _logger IsNot Nothing Then
-
-            _logger.LogWarning(
-                exception,
-                "The external API operation timed out.")
-        End If
-
-        MessageBox.Show(
-            Me,
-            "The external service took too long to respond." &
-            Environment.NewLine &
-            "Please try again.",
-            "API Timeout",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Warning)
-    End Sub
-
-    Private Sub HandleApiUnavailable(
-        exception As ExternalApiUnavailableException)
-
-        lblStatus.Text =
-            "The external API is unavailable."
-
-        If _logger IsNot Nothing Then
-
-            _logger.LogWarning(
-                exception,
-                "The external API is currently unavailable.")
-        End If
-
-        MessageBox.Show(
-            Me,
-            exception.Message,
-            "API Unavailable",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Warning)
-    End Sub
-    Private Sub HandleApiError(
-    exception As ExternalApiException)
-
-        lblStatus.Text =
-        "The external API operation failed."
-
-        If _logger IsNot Nothing Then
-
-            _logger.LogError(
-            exception,
-            "An external API operation failed.")
-
-        End If
-
-        MessageBox.Show(
-        Me,
-        exception.Message,
-        "External API Error",
-        MessageBoxButtons.OK,
-        MessageBoxIcon.Error)
-
-    End Sub
-
-
-    Private Sub HandleUnexpectedError(
-        exception As Exception)
-
-        lblStatus.Text =
-            "An unexpected REST API error occurred."
-
-        If _logger IsNot Nothing Then
-
-            _logger.LogError(
-                exception,
-                "An unexpected REST API error occurred.")
-        End If
-
-        MessageBox.Show(
-            Me,
-            exception.Message,
-            "REST API Error",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error)
-    End Sub
-
-    Private Sub RestApiForm_FormClosing(
+    Private Async Sub btnLoadPosts_Click(
         sender As Object,
-        e As FormClosingEventArgs) _
-        Handles MyBase.FormClosing
+        e As EventArgs) _
+        Handles btnLoadPosts.Click
 
-        If _cancellationSource IsNot Nothing Then
-
-            _cancellationSource.Cancel()
-
-        End If
-    End Sub
-    Private Sub HandleAuthenticationError(
-    exception As ExternalApiAuthenticationException)
-
-        lblStatus.Text =
-        "External API authentication failed."
-
-        If _logger IsNot Nothing Then
-
-            _logger.LogWarning(
-            exception,
-            "The external API authentication " &
-            "configuration is unavailable or invalid.")
-
+        If Not EnsureApplicationServiceAvailable() Then
+            Return
         End If
 
-        MessageBox.Show(
-        Me,
-        exception.Message,
-        "API Authentication Error",
-        MessageBoxButtons.OK,
-        MessageBoxIcon.Warning)
+        Dim userId As Integer = Decimal.ToInt32(nudUserId.Value)
+
+        BeginOperation($"Loading posts for user {userId}...")
+
+        Using diagnosticScope = New OperationDiagnosticsScope(_logger, "LoadExternalPosts")
+
+            Try
+
+                _logger.LogInformation("Loading external posts for user {UserId}.", userId)
+
+                Dim posts = Await _postService.GetPostsAsync(userId, _cancellationSource.Token)
+
+                DisplayPosts(posts)
+
+                diagnosticScope.MarkSucceeded()
+
+                _logger.LogInformation("{PostCount} external posts were loaded for user {UserId}.", posts.Count, userId)
+
+                lblStatus.Text = $"{posts.Count} posts loaded for user {userId}."
+
+            Catch ex As OperationCanceledException
+
+                diagnosticScope.MarkCancelled()
+
+                _logger.LogInformation("Loading external posts for user {UserId} was cancelled.", userId)
+
+                lblStatus.Text = "The HTTP request was cancelled."
+
+            Catch ex As ExternalApiAuthenticationException
+
+                diagnosticScope.MarkFailed()
+
+                HandleAuthenticationError(ex)
+
+            Catch ex As ExternalApiTimeoutException
+
+                diagnosticScope.MarkFailed()
+
+                HandleApiTimeout(ex)
+
+            Catch ex As ExternalApiUnavailableException
+
+                diagnosticScope.MarkFailed()
+
+                HandleApiUnavailable(ex)
+
+            Catch ex As ExternalApiException
+
+                diagnosticScope.MarkFailed()
+
+                HandleApiError(ex)
+
+            Catch ex As Exception
+
+                diagnosticScope.MarkFailed()
+
+                HandleUnexpectedError(ex)
+
+            Finally
+
+                EndOperation()
+
+            End Try
+
+        End Using
 
     End Sub
-
-    Private Function EnsureRequestValidatorAvailable() As Boolean
-        If _requestValidator IsNot Nothing Then
-            Return True
-        End If
-
-        MessageBox.Show(
-            Me,
-            "Input validation services are unavailable. Start the application through Program.Main.",
-            "Validation Service Unavailable",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error)
-
-        Return False
-    End Function
-    Private Sub txtTitle_TextChanged(
-    sender As Object,
-    e As EventArgs) _
-    Handles txtTitle.TextChanged
-
-        errorProviderInput.SetError(
-        txtTitle,
-        String.Empty)
-    End Sub
-
-    Private Sub txtBody_TextChanged(
-    sender As Object,
-    e As EventArgs) _
-    Handles txtBody.TextChanged
-
-        errorProviderInput.SetError(
-        txtBody,
-        String.Empty)
-    End Sub
-
-    Private Sub nudUserId_ValueChanged(
-    sender As Object,
-    e As EventArgs) _
-    Handles nudUserId.ValueChanged
-
-        errorProviderInput.SetError(
-        nudUserId,
-        String.Empty)
-    End Sub
-
 End Class

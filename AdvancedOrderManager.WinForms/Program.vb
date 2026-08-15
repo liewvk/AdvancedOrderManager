@@ -308,9 +308,7 @@ Friend Module Program
             .AddHostedService(
                 Of ApplicationStartupReporter)()
 
-        builder.Logging _
-            .SetMinimumLevel(
-                LogLevel.Information)
+
 
     End Sub
 

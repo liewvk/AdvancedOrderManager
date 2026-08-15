@@ -9,6 +9,7 @@ Imports System.Threading
 Imports System.Threading.Tasks
 Imports AdvancedOrderManager.Application
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
+Imports Microsoft.Extensions.Logging.Abstractions
 
 <TestClass>
 <TestCategory("Unit")>
@@ -42,9 +43,12 @@ Public Class ExternalPostApplicationServiceTests
             }
 
         Dim applicationService =
-            New ExternalPostApplicationService(
-                externalService,
-                _validator)
+    New ExternalPostApplicationService(
+        externalService,
+        _validator,
+        NullLogger(
+            Of ExternalPostApplicationService).Instance)
+
 
         Dim request =
             New CreateExternalPostRequest(
@@ -98,9 +102,12 @@ Public Class ExternalPostApplicationServiceTests
             New RecordingExternalPostService()
 
         Dim applicationService =
-            New ExternalPostApplicationService(
-                externalService,
-                _validator)
+    New ExternalPostApplicationService(
+        externalService,
+        _validator,
+        NullLogger(
+            Of ExternalPostApplicationService).Instance)
+
 
         Dim request =
             New CreateExternalPostRequest(
@@ -149,9 +156,12 @@ Public Class ExternalPostApplicationServiceTests
                     "Simulated HTTP failure."))
 
         Dim applicationService =
-            New ExternalPostApplicationService(
-                externalService,
-                _validator)
+    New ExternalPostApplicationService(
+        externalService,
+        _validator,
+        NullLogger(
+            Of ExternalPostApplicationService).Instance)
+
 
         Dim request =
             New CreateExternalPostRequest(
@@ -198,9 +208,12 @@ Public Class ExternalPostApplicationServiceTests
             New RecordingExternalPostService()
 
         Dim applicationService =
-            New ExternalPostApplicationService(
-                externalService,
-                _validator)
+    New ExternalPostApplicationService(
+        externalService,
+        _validator,
+        NullLogger(
+            Of ExternalPostApplicationService).Instance)
+
 
         Dim request =
             New CreateExternalPostRequest(

@@ -27,6 +27,22 @@ Friend Module Program
             RunApplication(
                 Environment.GetCommandLineArgs())
 
+        Catch ex As OptionsValidationException
+
+            Dim failureText As String =
+        String.Join(
+            Environment.NewLine,
+            ex.Failures)
+
+            Global.System.Windows.Forms.MessageBox.Show(
+        "The application configuration is invalid." &
+        Environment.NewLine &
+        Environment.NewLine &
+        failureText,
+        "Configuration Error",
+        Global.System.Windows.Forms.MessageBoxButtons.OK,
+        Global.System.Windows.Forms.MessageBoxIcon.Error)
+
         Catch ex As Exception
 
             Global.System.Windows.Forms.MessageBox.Show(
@@ -78,25 +94,77 @@ Friend Module Program
         ' Chapter 7
         ' Main application configuration
         '--------------------------------------------------
+        builder.Services _
+    .AddOptions(
+        Of ExternalApiAuthenticationOptions)() _
+    .Bind(
+        builder.Configuration.GetSection(
+            ExternalApiAuthenticationOptions.SectionName)) _
+    .Validate(
+        Function(options As ExternalApiAuthenticationOptions)
+
+            Select Case options.Mode
+
+                Case ExternalApiAuthenticationMode.None
+
+                    Return True
+
+                Case ExternalApiAuthenticationMode.ApiKey
+
+                    Return Not String.IsNullOrWhiteSpace(
+                            options.ApiKeyHeaderName) AndAlso
+                        Not String.IsNullOrWhiteSpace(
+                            options.ApiKey)
+
+                Case ExternalApiAuthenticationMode.BearerToken
+
+                    Return Not String.IsNullOrWhiteSpace(
+                            options.BearerToken)
+
+                Case Else
+
+                    Return False
+
+            End Select
+
+        End Function,
+        "The external API authentication configuration " &
+        "is incomplete or invalid.") _
+    .ValidateOnStart()
 
         builder.Services _
-            .Configure(
-                Of OrderManagerOptions)(
-                    builder.Configuration _
-                        .GetSection(
-                            OrderManagerOptions.SectionName))
+    .AddOptions(
+        Of OrderManagerOptions)() _
+    .Bind(
+        builder.Configuration.GetSection(
+            OrderManagerOptions.SectionName)) _
+    .Validate(
+        Function(options As OrderManagerOptions)
 
-        builder.Services _
-            .AddSingleton(
-                Function(provider)
+            Return Not String.IsNullOrWhiteSpace(
+                options.ApplicationTitle)
 
-                    Return provider _
-                        .GetRequiredService(
-                            Of IOptions(
-                                Of OrderManagerOptions))() _
-                        .Value
+        End Function,
+        "OrderManager:ApplicationTitle is required.") _
+    .Validate(
+        Function(options As OrderManagerOptions)
 
-                End Function)
+            Return options.DemonstrationTaxRate >= 0D AndAlso
+                   options.DemonstrationTaxRate <= 1D
+
+        End Function,
+        "OrderManager:DemonstrationTaxRate must be " &
+        "between 0 and 1.") _
+    .Validate(
+        Function(options As OrderManagerOptions)
+
+            Return options.MinimumBulkQuantity > 0
+
+        End Function,
+        "OrderManager:MinimumBulkQuantity must be " &
+        "greater than zero.") _
+    .ValidateOnStart()
+
 
         '--------------------------------------------------
         ' Chapter 10
@@ -104,11 +172,21 @@ Friend Module Program
         '--------------------------------------------------
 
         builder.Services _
-            .Configure(
-                Of OrderDatabaseOptions)(
-                    builder.Configuration _
-                        .GetSection(
-                            OrderDatabaseOptions.SectionName))
+    .AddOptions(
+        Of OrderDatabaseOptions)() _
+    .Bind(
+        builder.Configuration.GetSection(
+            OrderDatabaseOptions.SectionName)) _
+    .Validate(
+        Function(options As OrderDatabaseOptions)
+
+            Return Not String.IsNullOrWhiteSpace(
+                options.ConnectionString)
+
+        End Function,
+        "OrderDatabase:ConnectionString is required.") _
+    .ValidateOnStart()
+
 
         Dim databaseSection =
             builder.Configuration _

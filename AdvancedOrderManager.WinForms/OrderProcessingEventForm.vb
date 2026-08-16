@@ -653,4 +653,34 @@ Public Class OrderProcessingEventForm
 
     End Sub
 
+    Private Sub btnPerformanceDiagnostics_Click(
+       sender As Object,
+       e As EventArgs) _
+       Handles btnPerformanceDiagnostics.Click
+
+        If _serviceProvider Is Nothing Then
+
+            MessageBox.Show(
+                Me,
+                "Application services are unavailable. " &
+                "Start the application through Program.Main.",
+                "Service Unavailable",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error)
+
+            Return
+
+        End If
+
+        Using performanceForm As PerformanceDiagnosticsForm =
+        _serviceProvider.GetRequiredService(
+            Of PerformanceDiagnosticsForm)()
+
+            performanceForm.ShowDialog(
+                Me)
+
+        End Using
+
+    End Sub
+
 End Class

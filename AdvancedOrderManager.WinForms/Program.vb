@@ -193,6 +193,19 @@ Friend Module Program
     .AddTransient(
         Of IExternalPostApplicationService,
            ExternalPostApplicationService)()
+        '--------------------------------------------------
+        ' Chapter 18
+        ' Runtime performance diagnostics
+        '--------------------------------------------------
+
+        builder.Services _
+    .AddSingleton(
+        Of IRuntimePerformanceMonitor,
+           RuntimePerformanceMonitor)()
+
+        builder.Services _
+    .AddTransient(
+        Of PerformanceDiagnosticsForm)()
 
         '--------------------------------------------------
         ' Chapter 5-7

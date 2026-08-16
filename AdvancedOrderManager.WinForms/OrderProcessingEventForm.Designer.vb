@@ -45,6 +45,7 @@ Partial Class OrderProcessingEventForm
         btnDatabaseHistory = New Button()
         btnEntityFrameworkQueries = New Button()
         btnRestApi = New Button()
+        btnPerformanceDiagnostics = New Button()
         CType(nudUnitPrice, ComponentModel.ISupportInitialize).BeginInit()
         CType(nudQuantity, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -272,11 +273,21 @@ Partial Class OrderProcessingEventForm
         btnRestApi.Text = "REST API Demo"
         btnRestApi.UseVisualStyleBackColor = True
         ' 
+        ' btnPerformanceDiagnostics
+        ' 
+        btnPerformanceDiagnostics.Location = New Point(35, 412)
+        btnPerformanceDiagnostics.Name = "btnPerformanceDiagnostics"
+        btnPerformanceDiagnostics.Size = New Size(223, 36)
+        btnPerformanceDiagnostics.TabIndex = 13
+        btnPerformanceDiagnostics.Text = "Performance Diagnostics"
+        btnPerformanceDiagnostics.UseVisualStyleBackColor = True
+        ' 
         ' OrderProcessingEventForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(882, 603)
+        Controls.Add(btnPerformanceDiagnostics)
         Controls.Add(btnRestApi)
         Controls.Add(btnEntityFrameworkQueries)
         Controls.Add(btnDatabaseHistory)
@@ -331,4 +342,5 @@ Partial Class OrderProcessingEventForm
     Friend WithEvents btnDatabaseHistory As Button
     Friend WithEvents btnEntityFrameworkQueries As Button
     Friend WithEvents btnRestApi As Button
+    Friend WithEvents btnPerformanceDiagnostics As Button
 End Class
